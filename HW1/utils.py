@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config import USERS_COL_NAME, ITEMS_COL_NAME, RATING_COL_NAME, USER_COL, ITEM_COL
+from HW1.config import USERS_COL_NAME, ITEMS_COL_NAME, USER_COL, ITEM_COL, RATING_COL_NAME
 
 
 class Config:

@@ -1,8 +1,8 @@
 import pandas as pd
 
-from MatrixFactorizationModelSGD import MatrixFactorizationWithBiases
-from config import TRAIN_PATH, VALIDATION_PATH
-from utils import preprocess_for_mf, Config
+from HW1.MatrixFactorizationModelSGD import MatrixFactorizationWithBiases
+from HW1.config import TRAIN_PATH, VALIDATION_PATH
+from HW1.utils import preprocess_for_mf, Config
 
 
 def main():
