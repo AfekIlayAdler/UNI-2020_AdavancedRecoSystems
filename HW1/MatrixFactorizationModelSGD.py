@@ -78,13 +78,15 @@ class MatrixFactorizationWithBiases:
                 self.V[item, :] += self.lr * v_grad
 
     def predict(self, user, item):
-        if user.get(self.user_map, None):
-            if item.get(self.item_map, None):
+        user = user.get(self.user_map, None)
+        item = item.get(self.item_map, None)
+        if user:
+            if item:
                 prediction = self.predict_on_pair(user, item)
             else:
                 prediction = self.predict_on_existing_user_new_item(user)
         else:
-            if item.get(self.item_map, None):
+            if item:
                 prediction = self.predict_on_new_user_existing_item(item)
             else:
                 prediction = self.predict_on_new_user_new_item()
