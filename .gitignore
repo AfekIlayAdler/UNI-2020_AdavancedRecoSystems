@@ -1,1 +1,10 @@
 /.idea/*
+/.ipynb_checkpoints/Untitled-checkpoint.ipynb
+/HW1/__pycache__/config.cpython-37.pyc
+/HW1/__pycache__/matrix_factorization_abstract.cpython-37.pyc
+/HW1/__pycache__/MatrixFactorizationModelSGD.cpython-37.pyc
+/HW1/__pycache__/momentum_wrapper.cpython-37.pyc
+/HW1/__pycache__/utils.cpython-37.pyc
+/HW1/elbow.csv
+/HW1/elbow_4_32_rmse.csv
+/Untitled.ipynb
