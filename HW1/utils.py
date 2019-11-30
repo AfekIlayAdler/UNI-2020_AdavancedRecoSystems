@@ -36,30 +36,12 @@ def get_dict(group, col_name):
     else:
         return dict(zip(group[USERS_COL_NAME], group[RATING_COL_NAME]))
 
-def get_train_val_dicts(data):
-    dict_users = {}
-    groupby_user = data.groupby([USERS_COL_NAME])
-    for group_name, group in groupby_user:
-        dict_users[group_name] = get_dict(group, ITEMS_COL_NAME)
-    dict_items = {}
-    groupby_item = data.groupby([ITEMS_COL_NAME])
-    for group_name, group in groupby_item:
-        dict_items[group_name] = get_dict(group, USERS_COL_NAME)
-    return dict_users, dict_items
-
-
 def to_sparse_matrix(df, row, col):
     mat_csr = csr_matrix((df[RATING_COL_NAME], (df[row], df[col])))
     return mat_csr
 
-def preprocess_for_mf_als(train, validation):
-    #item_matrix = train.pivot_table(index=USERS_COL_NAME, columns=ITEMS_COL_NAME, values=RATING_COL_NAME)
-    #item_matrix.head()
-    # train_dict_users, train_dict_items = get_train_val_dicts(train)
-    # val_dict_users, val_dict_items = get_train_val_dicts(validation)
-    # return train_dict_users, train_dict_items,val_dict_users, val_dict_items, user_map, item_map
-
+def preprocess_for_mf_sgd_als(train, validation):
     train, validation, user_map, item_map = preprocess_for_mf(train, validation)
     user_item_sparse_matrix = to_sparse_matrix(train, USER_COL, ITEM_COL)
-    item_user_sparse_matrix = to_sparse_matrix(train, ITEM_COL, USER_COL)
-    return user_item_sparse_matrix, item_user_sparse_matrix, user_map, item_map
+    user_item_sparse_matrix.data = user_item_sparse_matrix.data.astype(float)
+    return user_item_sparse_matrix, train, validation,  user_map, item_map
