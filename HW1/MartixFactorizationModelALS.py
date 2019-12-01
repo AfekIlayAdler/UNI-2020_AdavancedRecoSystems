@@ -65,9 +65,9 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                 global_bias_vector = np.full((1, self.n_users), self.global_bias)
                 A = np.linalg.inv(XTX + lambdaI)
                 reg = global_bias_vector+self.user_biases+current_item_bias_vector
-                item_ranking.data -= np.take(reg.flatten(), item_ranking.indices)
-                B = np.sum(item_ranking.multiply(fixed_vecs.T), axis=1)
-                latent_vectors[i, :] = B.T.dot(A)
+                item_ranking.data -= np.take(reg, item_ranking.indices)
+                B = np.sum(item_ranking.multiply(fixed_vecs), axis=0)
+                latent_vectors[i, :] = B.dot(A)
         return latent_vectors
 
     def update_bias(self, type_vec='user'):
