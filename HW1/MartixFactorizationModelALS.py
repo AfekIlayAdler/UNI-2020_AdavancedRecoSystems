@@ -94,32 +94,22 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             return self.item_biases
 
 
-    def run_epoch(self, n_iter):
+    def run_epoch(self, epoch):
         """
-        Train model for n_iter iterations. Can be
-        called multiple times for further training.
+        Train model. Can be called multiple times for further training.
         """
-        ctr = 1
-        while ctr <= n_iter:
-            if ctr % 10 == 0:
-                print ('\tcurrent iteration: {}'.format(ctr))
-
-            self.U = self.als_step('user')
-            self.V = self.als_step('item')
-            self.user_biases = self.update_bias('user')
-            self.item_biases = self.update_bias('item')
-
-            ctr += 1
+        self.U = self.als_step('user')
+        self.V = self.als_step('item')
+        self.user_biases = self.update_bias('user')
+        self.item_biases = self.update_bias('item')
 
     def fit(self, train: np.array, validation: np.array, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
         self.weight_init(user_map, item_map)
         self.global_bias = np.mean(train[:, 2])
-        iter_array = [10]
-        iter_diff = 0
-        for (i, n_iter) in enumerate(iter_array):
-            self.run_epoch(n_iter - iter_diff)
-            self.record(n_iter, train_accuracy=self.prediction_loss(train),
+        for epoch in range(1, self.epochs + 1):
+            self.run_epoch(epoch)
+            self.record(epoch, train_accuracy=self.prediction_loss(train),
                         test_accuracy=self.prediction_loss(validation),
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
 
