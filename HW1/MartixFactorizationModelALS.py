@@ -38,32 +38,28 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         if type_vec == 'user':
             latent_vectors = self.U
             fixed_vecs = self.V
-            # Precompute
-            YTY = fixed_vecs.T.dot(fixed_vecs)
-            lambdaI = np.eye(YTY.shape[0]) * self.l2_users
-
             for u in range(latent_vectors.shape[0]):
                 user_ranking = self.ratings.getrow(u)
                 current_user_bias_vector = np.full((1, self.n_items), self.user_biases[u])
                 global_bias_vector = np.full((1, self.n_items), self.global_bias)
-                A = np.linalg.inv(YTY + lambdaI)
                 reg = global_bias_vector+current_user_bias_vector+self.item_biases
                 user_ranking.data -= np.take(reg.flatten(), user_ranking.indices)
                 B = np.sum(user_ranking.multiply(fixed_vecs.T), axis=1)
+                YTY = fixed_vecs[u].T.dot(fixed_vecs[u])
+                lambdaI = np.eye(YTY.shape[0]) * self.l2_users
+                A = np.linalg.inv(YTY + lambdaI)
                 latent_vectors[u, :] = B.T.dot(A)
 
         elif type_vec == 'item':
             latent_vectors = self.V
             fixed_vecs = self.U
-            # Precompute
-            XTX = fixed_vecs.T.dot(fixed_vecs)
-            lambdaI = np.eye(XTX.shape[0]) * self.l2_items
-
             for i in range(latent_vectors.shape[0]):
+                XTX = fixed_vecs[i].T.dot(fixed_vecs[i])
+                lambdaI = np.eye(XTX.shape[0]) * self.l2_items
+                A = np.linalg.inv(XTX + lambdaI)
                 item_ranking = self.ratings.getcol(i)  # get the user ranking vector
                 current_item_bias_vector = np.full((1, self.n_users), self.item_biases[i])
                 global_bias_vector = np.full((1, self.n_users), self.global_bias)
-                A = np.linalg.inv(XTX + lambdaI)
                 reg = global_bias_vector+self.user_biases+current_item_bias_vector
                 item_ranking.data -= np.take(reg, item_ranking.indices)
                 B = np.sum(item_ranking.multiply(fixed_vecs), axis=0)
