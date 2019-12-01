@@ -35,34 +35,31 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         One of the two ALS steps. Solve for the latent vectors
         specified by type.
         """
+
         if type_vec == 'user':
             latent_vectors = self.U
             fixed_vecs = self.V
             for u in range(latent_vectors.shape[0]):
                 user_ranking = self.ratings.getrow(u)
-                current_user_bias_vector = np.full((1, self.n_items), self.user_biases[u])
-                global_bias_vector = np.full((1, self.n_items), self.global_bias)
-                reg = global_bias_vector+current_user_bias_vector+self.item_biases
-                user_ranking.data -= np.take(reg.flatten(), user_ranking.indices)
-                B = np.sum(user_ranking.multiply(fixed_vecs.T), axis=1)
-                YTY = fixed_vecs[u].T.dot(fixed_vecs[u])
+                YTY = fixed_vecs[user_ranking.indices].T.dot(fixed_vecs[user_ranking.indices])  # choosing only the vectors from V  the the crurent user rated
                 lambdaI = np.eye(YTY.shape[0]) * self.l2_users
                 A = np.linalg.inv(YTY + lambdaI)
-                latent_vectors[u, :] = B.T.dot(A)
+                biases = self.global_bias+self.user_biases[u]+self.item_biases[user_ranking.indices]  # summing all parts of biases
+                user_ranking.data -= biases
+                B = np.sum(np.multiply(user_ranking.data, fixed_vecs[user_ranking.indices].T), axis=1)
+                latent_vectors[u, :] = B.dot(A)
 
         elif type_vec == 'item':
             latent_vectors = self.V
             fixed_vecs = self.U
             for i in range(latent_vectors.shape[0]):
-                XTX = fixed_vecs[i].T.dot(fixed_vecs[i])
+                item_ranking = self.ratings.getcol(i)  # get the user ranking vector
+                XTX = fixed_vecs[item_ranking.indices].T.dot(fixed_vecs[item_ranking.indices])
                 lambdaI = np.eye(XTX.shape[0]) * self.l2_items
                 A = np.linalg.inv(XTX + lambdaI)
-                item_ranking = self.ratings.getcol(i)  # get the user ranking vector
-                current_item_bias_vector = np.full((1, self.n_users), self.item_biases[i])
-                global_bias_vector = np.full((1, self.n_users), self.global_bias)
-                reg = global_bias_vector+self.user_biases+current_item_bias_vector
-                item_ranking.data -= np.take(reg, item_ranking.indices)
-                B = np.sum(item_ranking.multiply(fixed_vecs), axis=0)
+                biases = self.global_bias+self.user_biases[item_ranking.indices]+self.item_biases[i] # summing all parts of biases
+                item_ranking.data -= biases
+                B = np.sum(np.multiply(item_ranking.data.reshape(-1, 1), fixed_vecs[item_ranking.indices]), axis=0)
                 latent_vectors[i, :] = B.dot(A)
         return latent_vectors
 
@@ -70,20 +67,18 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         if type_vec == 'user':
             for u in range(self.n_users):
                 user_ranking = self.ratings.getrow(u)
-                global_bias_vector = np.full((1, self.n_items), self.global_bias)
-                A = user_ranking.count_nonzero() + self.l2_users_bias
-                reg = global_bias_vector + self.item_biases + np.dot(self.U[u], self.V.T)
-                user_ranking.data -= np.take(reg.flatten(), user_ranking.indices)
+                A = user_ranking.nnz + self.l2_users_bias
+                biases = self.global_bias + self.item_biases[user_ranking.indices] + np.dot(self.U[u], self.V[user_ranking.indices].T)
+                user_ranking.data -= biases
                 self.user_biases[u] = np.sum(user_ranking)/A
             return self.user_biases
 
         elif type_vec == 'item':
             for i in range(self.n_items):
                 item_ranking = self.ratings.getcol(i)
-                global_bias_vector = np.full((1, self.n_users), self.global_bias)
-                A = item_ranking.count_nonzero() + self.l2_items_bias
-                reg = global_bias_vector + self.user_biases + np.dot(self.U, self.V[i])
-                item_ranking.data -= np.take(reg.flatten(), item_ranking.indices)
+                A = item_ranking.nnz + self.l2_items_bias
+                biases = self.global_bias + self.user_biases[item_ranking.indices] + np.dot(self.U[item_ranking.indices], self.V[i])
+                item_ranking.data -= biases
                 self.item_biases[i] = np.sum(item_ranking)/A
             return self.item_biases
 
