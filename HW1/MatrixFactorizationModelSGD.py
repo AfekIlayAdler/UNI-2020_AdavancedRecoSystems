@@ -90,37 +90,3 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 self.U[user, :] += self.lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item, :] += self.lr * self.items_h_gradient.get(v_grad, item)
 
-    def predict(self, user, item):
-        """
-        predict on user and item with their original ids not internal ids
-        """
-        user = user.get(self.user_map, None)
-        item = item.get(self.item_map, None)
-        if user:
-            if item:
-                prediction = self.predict_on_pair(user, item)
-            else:
-                prediction = self.predict_on_existing_user_new_item(user)
-        else:
-            if item:
-                prediction = self.predict_on_new_user_existing_item(item)
-            else:
-                prediction = self.predict_on_new_user_new_item()
-        return np.clip(prediction, 1, 5)
-
-    def predict_on_pair(self, user, item):
-
-        # TODO make sure that if we see a new user we return the global mean and if we have a new item and an
-        #  existing user exc exc
-        return self.global_bias + self.user_biases[user] + self.item_biases[item] \
-               + self.U[user, :].dot(self.V[item, :].T)
-
-    def predict_on_new_user_existing_item(self, item):
-        return self.global_bias + self.item_biases[item]
-
-    def predict_on_existing_user_new_item(self, user):
-        return self.global_bias + self.user_biases[user]
-
-    def predict_on_new_user_new_item(self):
-        return self.global_bias
-
