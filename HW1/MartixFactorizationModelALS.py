@@ -1,7 +1,5 @@
 import numpy as np
-from numpy.linalg import solve
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
-from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     def __init__(self, config):
@@ -48,11 +46,11 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                 user_ranking = self.ratings.getrow(u)
                 current_user_bias_vector = np.full((1, self.n_items), self.user_biases[u])
                 global_bias_vector = np.full((1, self.n_items), self.global_bias)
-                A = (YTY + lambdaI)
+                A = np.linalg.inv(YTY + lambdaI)
                 reg = global_bias_vector+current_user_bias_vector+self.item_biases
                 user_ranking.data -= np.take(reg.flatten(), user_ranking.indices)
-                B = user_ranking.dot(fixed_vecs).T
-                latent_vectors[u, :] = solve(A, B).reshape(self.h_len)
+                B = np.sum(user_ranking.multiply(fixed_vecs.T), axis=1)
+                latent_vectors[u, :] = B.T.dot(A)
 
         elif type_vec == 'item':
             latent_vectors = self.V
@@ -65,11 +63,11 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                 item_ranking = self.ratings.getcol(i)  # get the user ranking vector
                 current_item_bias_vector = np.full((1, self.n_users), self.item_biases[i])
                 global_bias_vector = np.full((1, self.n_users), self.global_bias)
-                A = (XTX + lambdaI)
+                A = np.linalg.inv(XTX + lambdaI)
                 reg = global_bias_vector+self.user_biases+current_item_bias_vector
                 item_ranking.data -= np.take(reg.flatten(), item_ranking.indices)
-                B = item_ranking.T.dot(fixed_vecs).T
-                latent_vectors[i, :] = solve(A, B).reshape(self.h_len)
+                B = np.sum(item_ranking.multiply(fixed_vecs.T), axis=1)
+                latent_vectors[i, :] = B.T.dot(A)
         return latent_vectors
 
     def update_bias(self, type_vec='user'):
