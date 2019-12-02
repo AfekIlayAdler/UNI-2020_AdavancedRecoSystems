@@ -37,31 +37,26 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         """
 
         if type_vec == 'user':
-            latent_vectors = self.U
-            fixed_vecs = self.V
-            for u in range(latent_vectors.shape[0]):
+            for u in range(self.U.shape[0]):
                 user_ranking = self.ratings.getrow(u)
-                YTY = fixed_vecs[user_ranking.indices].T.dot(fixed_vecs[user_ranking.indices])  # choosing only the vectors from V  the the crurent user rated
+                YTY = self.V[user_ranking.indices].T.dot(self.V[user_ranking.indices])  # choosing only the vectors from V  the the crurent user rated
                 lambdaI = np.eye(YTY.shape[0]) * self.l2_users
                 A = np.linalg.inv(YTY + lambdaI)
                 biases = self.global_bias+self.user_biases[u]+self.item_biases[user_ranking.indices]  # summing all parts of biases
                 user_ranking.data -= biases
-                B = np.sum(np.multiply(user_ranking.data, fixed_vecs[user_ranking.indices].T), axis=1)
-                latent_vectors[u, :] = B.dot(A)
+                B = np.sum(np.multiply(user_ranking.data, self.V[user_ranking.indices].T), axis=1)
+                self.U[u, :] = B.dot(A)
 
         elif type_vec == 'item':
-            latent_vectors = self.V
-            fixed_vecs = self.U
-            for i in range(latent_vectors.shape[0]):
+            for i in range(self.V.shape[0]):
                 item_ranking = self.ratings.getcol(i)  # get the user ranking vector
-                XTX = fixed_vecs[item_ranking.indices].T.dot(fixed_vecs[item_ranking.indices])
+                XTX = self.U[item_ranking.indices].T.dot(self.U[item_ranking.indices])
                 lambdaI = np.eye(XTX.shape[0]) * self.l2_items
                 A = np.linalg.inv(XTX + lambdaI)
                 biases = self.global_bias+self.user_biases[item_ranking.indices]+self.item_biases[i] # summing all parts of biases
                 item_ranking.data -= biases
-                B = np.sum(np.multiply(item_ranking.data.reshape(-1, 1), fixed_vecs[item_ranking.indices]), axis=0)
-                latent_vectors[i, :] = B.dot(A)
-        return latent_vectors
+                B = np.sum(np.multiply(item_ranking.data.reshape(-1, 1), self.U[item_ranking.indices]), axis=0)
+                self.V[i, :] = B.dot(A)
 
     def update_bias(self, type_vec='user'):
         if type_vec == 'user':
@@ -71,7 +66,6 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                 biases = self.global_bias + self.item_biases[user_ranking.indices] + np.dot(self.U[u], self.V[user_ranking.indices].T)
                 user_ranking.data -= biases
                 self.user_biases[u] = np.sum(user_ranking)/A
-            return self.user_biases
 
         elif type_vec == 'item':
             for i in range(self.n_items):
@@ -80,17 +74,16 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                 biases = self.global_bias + self.user_biases[item_ranking.indices] + np.dot(self.U[item_ranking.indices], self.V[i])
                 item_ranking.data -= biases
                 self.item_biases[i] = np.sum(item_ranking)/A
-            return self.item_biases
 
 
     def run_epoch(self, epoch):
         """
         Train model. Can be called multiple times for further training.
         """
-        self.U = self.als_step('user')
-        self.V = self.als_step('item')
-        self.user_biases = self.update_bias('user')
-        self.item_biases = self.update_bias('item')
+        self.als_step('user')
+        self.als_step('item')
+        self.update_bias('user')
+        self.update_bias('item')
 
     def fit(self, train: np.array, validation: np.array, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
