@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
+from numpy import linalg as LA
 
 class MatrixFactorizationWithBiases:
     def __init__(self, seed, hidden_dimension):
@@ -60,10 +61,12 @@ class MatrixFactorizationWithBiases:
 
     def calc_loss(self, x):
         loss = 0
-        parameters = [self.user_biases, self.item_biases, self.U, self.V]
-        regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
-        for i in range(len(parameters)):
-            loss += regularizations[i] * np.sum(np.square(parameters[i]))
+        parameters_biases = [(self.user_biases, self.l2_users_bias), (self.item_biases,self.l2_items_bias)]
+        parameters = [(self.U, self.l2_users), (self.V, self.l2_items)]
+        for b in parameters_biases:
+            loss += b[1] * np.sum(np.square(b[0]))
+        for p in parameters:
+            loss += p[1] * np.sum(LA.norm(p[0], axis=1))
         return loss + self.prediction_loss(x)
 
     def rmse(self, x):
