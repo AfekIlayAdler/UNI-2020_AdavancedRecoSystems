@@ -1,5 +1,6 @@
 import numpy as np
 
+from HW1.optimization_objects import LearningRateScheduler, EarlyStopping
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 
@@ -9,30 +10,23 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         super().__init__(config.seed, config.hidden_dimension)
         self.n_users = config.n_users
         self.n_items = config.n_items
-        self.lr = config.lr
+        self.lr = LearningRateScheduler(config.lr)
+        self.early_stopping = EarlyStopping(3)
         self.l2_users = config.l2_users
         self.l2_items = config.l2_items
         self.l2_users_bias = config.l2_users_bias
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
         self.number_bias_epochs = config.bias_epochs
-        self.global_bias = None
-        self.user_biases = None
-        self.item_biases = None
-        self.U = None  # users matrix
-        self.V = None  # items matrix
-        self.momentum = True
-        self.users_h_gradient = None  # for momentum
-        self.items_h_gradient = None  # for momentum
-        self.user_map = None
-        self.item_map = None
-        self.user_biases_gradient = None
-        self.item_biases_gradient = None
+        none_args = ['global_bias', 'user_biases', 'item_biases', 'U', 'V', 'users_h_gradient', 'items_h_gradient',
+                     'user_map', 'item_map', 'user_biases_gradient', 'item_biases_gradient']
+        for arg in none_args:
+            setattr(self, arg, None)
         self.beta = 0.7
         self.results = {}
-        # TODO understand if we need self.batch_size
 
-    def weight_init(self, user_map, item_map):
+    def weight_init(self, user_map, item_map, global_bias):
+        self.global_bias = global_bias
         self.user_map, self.item_map = user_map, item_map
         # TODO understand if we can get a better initialization
         self.U = np.random.normal(scale=1. / self.h_len, size=(self.n_users, self.h_len))
@@ -45,82 +39,34 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.user_biases_gradient = MomentumWrapper1D(self.n_users, self.beta)
         self.item_biases_gradient = MomentumWrapper1D(self.n_items, self.beta)
 
-    def fit(self, train: np.array, validation: np.array, user_map: dict, item_map: dict):
+    def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
-        self.weight_init(user_map, item_map)
-        self.global_bias = np.mean(train[:, 2])
+        train, validation = train.values, validation.values
+        self.weight_init(user_map, item_map, np.mean(train[:, 2]))
         for epoch in range(1, self.epochs + 1):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
-            self.record(epoch, train_accuracy=self.prediction_loss(train),
-                        test_accuracy=self.prediction_loss(validation),
+            validation_error = self.prediction_error(validation)
+            self.record(epoch, train_accuracy=self.prediction_error(train),
+                        test_accuracy = validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if epoch == 10:
-                self.lr *= 0.1
-
-    def prediction_loss(self, x, rmse=True):
-        e = 0
-        for row in x:
-            user, item, rating = row
-            e += np.square(rating - self.predict_on_pair(user, item))
-        if rmse:
-            return np.sqrt(e / x.shape[0])
-        return e
-
-    def calc_loss(self, x):
-        loss = 0
-        parameters = [self.user_biases, self.item_biases, self.U, self.V]
-        regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
-        for i in range(len(parameters)):
-            loss += regularizations[i] * np.sum(np.square(parameters[i]))
-        return loss + self.prediction_loss(x, rmse=False)
+            if self.early_stopping.stop(epoch, validation_error):
+                break
 
     def run_epoch(self, data, epoch):
+        lr = self.lr.update(epoch)
         for row in data:
             user, item, rating = row
             prediction = self.predict_on_pair(user, item)
             error = rating - prediction
             u_b_gradient = (error - self.l2_users_bias * self.user_biases[user])
             i_b_gradient = (error - self.l2_items_bias * self.item_biases[item])
-            self.user_biases[user] += self.lr * self.user_biases_gradient.get(u_b_gradient, user)
-            self.item_biases[item] += self.lr * self.item_biases_gradient.get(i_b_gradient, item)
+            self.user_biases[user] += lr * self.user_biases_gradient.get(u_b_gradient, user)
+            self.item_biases[item] += lr * self.item_biases_gradient.get(i_b_gradient, item)
             if epoch > self.number_bias_epochs:
                 u_grad = (error * self.V[item, :] - self.l2_users * self.U[user, :])
                 v_grad = (error * self.U[user, :] - self.l2_items * self.V[item, :])
-                self.U[user, :] += self.lr * self.users_h_gradient.get(u_grad, user)
-                self.V[item, :] += self.lr * self.items_h_gradient.get(v_grad, item)
+                self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
+                self.V[item, :] += lr * self.items_h_gradient.get(v_grad, item)
 
-    def predict(self, user, item):
-        """
-        predict on user and item with their original ids not internal ids
-        """
-        user = user.get(self.user_map, None)
-        item = item.get(self.item_map, None)
-        if user:
-            if item:
-                prediction = self.predict_on_pair(user, item)
-            else:
-                prediction = self.predict_on_existing_user_new_item(user)
-        else:
-            if item:
-                prediction = self.predict_on_new_user_existing_item(item)
-            else:
-                prediction = self.predict_on_new_user_new_item()
-        return np.clip(prediction, 1, 5)
-
-    def predict_on_pair(self, user, item):
-
-        # TODO make sure that if we see a new user we return the global mean and if we have a new item and an
-        #  existing user exc exc
-        return self.global_bias + self.user_biases[user] + self.item_biases[item] \
-               + self.U[user, :].dot(self.V[item, :].T)
-
-    def predict_on_new_user_existing_item(self, item):
-        return self.global_bias + self.item_biases[item]
-
-    def predict_on_existing_user_new_item(self, user):
-        return self.global_bias + self.user_biases[user]
-
-    def predict_on_new_user_new_item(self):
-        return self.global_bias
 

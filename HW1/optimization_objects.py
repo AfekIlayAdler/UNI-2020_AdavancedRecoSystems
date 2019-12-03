@@ -11,8 +11,12 @@ class LearningRateScheduler:
 
 class EarlyStopping:
     def __init__(self, n_iter, min_epoch=15):
+        """
+        :param n_iter: if error is increasing for n_iter -> stop
+        :param min_epoch: don't stop before min_epcoch
+        """
         self.n_iter = n_iter
-        self.last_value = None
+        self.last_value = 0
         self.consecutive_increasing_errors = 0
         self.min_epoch = min_epoch
 
@@ -21,4 +25,5 @@ class EarlyStopping:
             self.consecutive_increasing_errors += 1
         if self.consecutive_increasing_errors >= self.n_iter:
             return True
+        self.last_value = error
         return False
