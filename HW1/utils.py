@@ -1,5 +1,4 @@
 import pandas as pd
-from scipy import sparse
 from scipy.sparse import csr_matrix
 from HW1.config import USERS_COL_NAME, ITEMS_COL_NAME, USER_COL, ITEM_COL, RATING_COL_NAME
 
