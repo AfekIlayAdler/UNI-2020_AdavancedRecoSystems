@@ -29,7 +29,7 @@ def find_optimal_architecture(algo):
         for reg in regularizations:
             print ('Regularization: {}'.format(reg))
             for rate in learning_rates:
-                mf, results = main(hidden_dimension=fact, regularizations=reg, epochs=20, lr=rate, algo=algo)
+                mf, results = main(hidden_dimension=fact, regularizations=reg, epochs=2, lr=rate, algo=algo)
                 min_idx = results["test_loss_{}".format(fact)].idxmin()
                 if results["test_loss_{}".format(fact)][min_idx] < best_params['test']:
                     best_params['n_factors'] = fact
@@ -50,7 +50,6 @@ def main(**kwargs):
     n_users = len(user_map)
     n_items = len(item_map)
     results = []
-    hidden_dimension = 16
     config = Config(
         hidden_dimension=kwargs["hidden_dimension"], lr=kwargs["lr"],
         l2_users=kwargs["regularizations"],
