@@ -4,6 +4,7 @@ from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.optimization_objects import EarlyStopping
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
+    # initialization of model's parameters
     def __init__(self, config):
         super().__init__(config.seed, config.hidden_dimension)
         self.n_users = config.n_users
@@ -24,6 +25,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.item_dict = {}
         self.results = {}
 
+    # initialization of model's weights
     def weight_init(self, user_map, item_map):
         self.user_map, self.item_map = user_map, item_map
         # TODO understand if we can get a better initialization
@@ -44,11 +46,11 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             error = ratings - item_biases - user_bias - self.global_bias
             left_matrix = np.linalg.inv(item_vecs.T.dot(item_vecs) + np.eye(self.h_len) * self.l2_users)
             right_vec = np.multiply(item_vecs.T, error).sum(axis=1)
-            self.U[u, :] = left_matrix.dot(right_vec)
+            self.U[u, :] = left_matrix.dot(right_vec)  # update current user low dimensional vector
             # user bias
             right_hand_side = np.sum(ratings - item_biases - self.global_bias - item_vecs.dot(self.U[u, :]))
             left_hand_side = 1 / (self.l2_users_bias + n_items)
-            self.user_biases[u] = left_hand_side*right_hand_side
+            self.user_biases[u] = left_hand_side*right_hand_side  # update current user biases
         # items
         for i in range(self.n_items):
             # item hidden
@@ -59,20 +61,20 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             error = ratings - user_biases - item_bias - self.global_bias
             left_matrix = np.linalg.inv(user_vecs.T.dot(user_vecs) + np.eye(self.h_len) * self.l2_items)
             right_vec = np.multiply(user_vecs.T, error).sum(axis=1)
-            self.V[i, :] = left_matrix.dot(right_vec)
+            self.V[i, :] = left_matrix.dot(right_vec)  # update current item low dimensional vector
             # item bias
             right_hand_side = np.sum(ratings - user_biases - self.global_bias - user_vecs.dot(self.V[i, :]))
             left_hand_side = 1 / (self.l2_items_bias + n_users)
-            self.item_biases[i] = left_hand_side*right_hand_side
+            self.item_biases[i] = left_hand_side*right_hand_side  # update current item biases
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
         train = train.sort_values(by=['user', 'item'])
         validation = validation.sort_values(by=['user', 'item'])
-        for user in range(self.n_users):
+        for user in range(self.n_users):  # get for current user all ratings, and items indices
             self.user_dict[user] = {'items': train[train.user == user]['item'].values,
                                     'ratings': train[train.user == user]['Ratings_Rating'].values}
-        for item in range(self.n_items):
+        for item in range(self.n_items):  # get for current item all ratings, and users indices
             self.item_dict[item] = {'users': train[train.item == item]['user'].values,
                                     'ratings': train[train.item == item]['Ratings_Rating'].values}
 
@@ -81,6 +83,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.global_bias = np.mean(train[:, 2])
         for epoch in range(1, self.epochs + 1):
             self.als_step()
+            # calculate train/validation error and loss
             validation_error = self.prediction_error(validation)
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
