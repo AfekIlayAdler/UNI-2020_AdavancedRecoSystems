@@ -3,7 +3,7 @@ import pandas as pd
 from HW1.MatrixFactorizationModelSGD import MatrixFactorizationWithBiasesSGD
 from HW1.MartixFactorizationModelALS import MatrixFactorizationWithBiasesALS
 from HW1.config import TRAIN_PATH, VALIDATION_PATH
-from HW1.utils import preprocess_for_mf, preprocess_for_mf_sgd_als, Config
+from HW1.utils import preprocess_for_mf_sgd_als, Config
 
 
 def main():
@@ -16,11 +16,11 @@ def main():
         config = Config(
             ratings=user_item_sparse_matrix,
             hidden_dimension=i, lr=0.01,
-            l2_users=0.002,
-            l2_items=0.002,
-            l2_users_bias=0.002,
-            l2_items_bias=0.002,
-            epochs=100,
+            l2_users=0.09,
+            l2_items=0.09,
+            l2_users_bias=0.09,
+            l2_items_bias=0.09,
+            epochs=20,
             bias_epochs=1,
             n_users=n_users, n_items=n_items, seed=1)
 
