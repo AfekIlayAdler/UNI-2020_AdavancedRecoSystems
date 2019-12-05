@@ -38,8 +38,8 @@ def find_optimal_architecture(algo):
                     best_params['train'] = results["train_loss_{}".format(fact)][min_idx]
                     best_params['test'] = results["test_loss_{}".format(fact)][min_idx]
                     best_params['model'] = mf
-                    print ('New optimal hyperparameters')
-                    print (pd.Series(best_params))
+    print ('optimal hyperparameters')
+    print (pd.Series(best_params))
 
     with open('best_model.pkl', 'wb') as output:
         pickle.dump(best_params, output)
