@@ -1,25 +1,28 @@
 import numpy as np
+
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
+from HW1.optimization_objects import EarlyStopping
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     def __init__(self, config):
         super().__init__(config.seed, config.hidden_dimension)
         self.n_users = config.n_users
         self.n_items = config.n_items
-        self.ratings = config.ratings
         self.l2_users = config.l2_users
         self.l2_items = config.l2_items
         self.l2_users_bias = config.l2_users_bias
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
+        self.early_stopping = EarlyStopping(3)
         self.number_bias_epochs = config.bias_epochs
         self.global_bias = None
         self.user_biases = None
         self.item_biases = None
         self.U = None  # users matrix
         self.V = None  # items matrix
+        self.user_dict = {}
+        self.item_dict = {}
         self.results = {}
-        # TODO understand if we need self.batch_size
 
     def weight_init(self, user_map, item_map):
         self.user_map, self.item_map = user_map, item_map
@@ -30,68 +33,57 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.user_biases = np.zeros(self.n_users)
         self.item_biases = np.zeros(self.n_items)
 
-    def als_step(self, type_vec='user'):
-        """
-        One of the two ALS steps. Solve for the latent vectors
-        specified by type.
-        """
+    def als_step(self):
+        # users
+        for u in range(self.n_users):
+            # user hidden
+            item_vecs = self.V[self.user_dict[u]['items'], :]
+            item_biases, user_bias = self.item_biases[self.user_dict[u]['items']], self.user_biases[u]
+            ratings = self.user_dict[u]['ratings']
+            n_items = ratings.size
+            error = ratings - item_biases - user_bias - self.global_bias
+            left_matrix = np.linalg.inv(item_vecs.T.dot(item_vecs) + np.eye(self.h_len) * self.l2_users)
+            right_vec = np.multiply(item_vecs.T, error).sum(axis=1)
+            self.U[u, :] = left_matrix.dot(right_vec)
+            # user bias
+            right_hand_side = np.sum(ratings - item_biases - self.global_bias - item_vecs.dot(self.U[u, :]))
+            left_hand_side = 1 / (self.l2_users_bias + n_items)
+            self.user_biases[u] = left_hand_side*right_hand_side
+        # items
+        for i in range(self.n_items):
+            # item hidden
+            user_vecs = self.U[self.item_dict[i]['users'], :]
+            user_biases, item_bias = self.user_biases[self.item_dict[i]['users']], self.item_biases[i]
+            ratings = self.item_dict[i]['ratings']
+            n_users = ratings.size
+            error = ratings - user_biases - item_bias - self.global_bias
+            left_matrix = np.linalg.inv(user_vecs.T.dot(user_vecs) + np.eye(self.h_len) * self.l2_items)
+            right_vec = np.multiply(user_vecs.T, error).sum(axis=1)
+            self.V[i, :] = left_matrix.dot(right_vec)
+            # item bias
+            right_hand_side = np.sum(ratings - user_biases - self.global_bias - user_vecs.dot(self.V[i, :]))
+            left_hand_side = 1 / (self.l2_items_bias + n_users)
+            self.item_biases[i] = left_hand_side*right_hand_side
 
-        if type_vec == 'user':
-            for u in range(self.U.shape[0]):
-                user_ranking = self.ratings.getrow(u)
-                YTY = self.V[user_ranking.indices].T.dot(self.V[user_ranking.indices])  # choosing only the vectors from V  the the crurent user rated
-                lambdaI = np.eye(YTY.shape[0]) * self.l2_users
-                A = np.linalg.inv(YTY + lambdaI)
-                biases = self.global_bias+self.user_biases[u]+self.item_biases[user_ranking.indices]  # summing all parts of biases
-                user_ranking.data -= biases
-                B = np.sum(np.multiply(user_ranking.data, self.V[user_ranking.indices].T), axis=1)
-                self.U[u, :] = B.dot(A)
-
-        elif type_vec == 'item':
-            for i in range(self.V.shape[0]):
-                item_ranking = self.ratings.getcol(i)  # get the user ranking vector
-                XTX = self.U[item_ranking.indices].T.dot(self.U[item_ranking.indices])
-                lambdaI = np.eye(XTX.shape[0]) * self.l2_items
-                A = np.linalg.inv(XTX + lambdaI)
-                biases = self.global_bias+self.user_biases[item_ranking.indices]+self.item_biases[i] # summing all parts of biases
-                item_ranking.data -= biases
-                B = np.sum(np.multiply(item_ranking.data.reshape(-1, 1), self.U[item_ranking.indices]), axis=0)
-                self.V[i, :] = B.dot(A)
-
-    def update_bias(self, type_vec='user'):
-        if type_vec == 'user':
-            for u in range(self.n_users):
-                user_ranking = self.ratings.getrow(u)
-                A = user_ranking.nnz + self.l2_users_bias
-                biases = self.global_bias + self.item_biases[user_ranking.indices] + np.dot(self.U[u], self.V[user_ranking.indices].T)
-                user_ranking.data -= biases
-                self.user_biases[u] = np.sum(user_ranking)/A
-
-        elif type_vec == 'item':
-            for i in range(self.n_items):
-                item_ranking = self.ratings.getcol(i)
-                A = item_ranking.nnz + self.l2_items_bias
-                biases = self.global_bias + self.user_biases[item_ranking.indices] + np.dot(self.U[item_ranking.indices], self.V[i])
-                item_ranking.data -= biases
-                self.item_biases[i] = np.sum(item_ranking)/A
-
-
-    def run_epoch(self, epoch):
-        """
-        Train model. Can be called multiple times for further training.
-        """
-        self.als_step('user')
-        self.als_step('item')
-        self.update_bias('user')
-        self.update_bias('item')
-
-    def fit(self, train: np.array, validation: np.array, user_map: dict, item_map: dict):
+    def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
+        train = train.sort_values(by=['user', 'item'])
+        validation = validation.sort_values(by=['user', 'item'])
+        for user in range(self.n_users):
+            self.user_dict[user] = {'items': train[train.user == user]['item'].values,
+                                    'ratings': train[train.user == user]['Ratings_Rating'].values}
+        for item in range(self.n_items):
+            self.item_dict[item] = {'users': train[train.item == item]['user'].values,
+                                    'ratings': train[train.item == item]['Ratings_Rating'].values}
+
+        train, validation = train.values, validation.values
         self.weight_init(user_map, item_map)
         self.global_bias = np.mean(train[:, 2])
         for epoch in range(1, self.epochs + 1):
-            self.run_epoch(epoch)
-            self.record(epoch, train_accuracy=self.prediction_loss(train),
-                        test_accuracy=self.prediction_loss(validation),
+            self.als_step()
+            validation_error = self.prediction_error(validation)
+            self.record(epoch, train_accuracy=self.prediction_error(train),
+                        test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-
+            if self.early_stopping.stop(epoch, validation_error):
+                break
