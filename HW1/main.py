@@ -37,12 +37,15 @@ def run_exp(model):
                              callback=[checkpoint_saver])
         print(res_gp.x)
         print(res_gp.fun)
-        skopt.dump(res_gp,HYPER_PARAM_FILE_NAME)
+        skopt.dump(res_gp, HYPER_PARAM_FILE_NAME)
         plot_convergence(res_gp)
     else:
         model.fit(train, validation, user_map, item_map)
 
 
+# TODO: disable prints when running bayesian optimization
+# TODO add option to train on all with no validation (train best model and predict on test)
+# TODO: verify r2 is correct
 if __name__ == '__main__':
     train, validation = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
     train, validation, user_map, item_map = preprocess_for_mf(train, validation)
