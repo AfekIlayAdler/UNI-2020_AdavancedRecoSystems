@@ -5,7 +5,7 @@ from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     def __init__(self, config):
-        super().__init__(config.seed, config.hidden_dimension)
+        super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
         self.n_users = config.n_users
         self.n_items = config.n_items
         self.l2_users = config.l2_users

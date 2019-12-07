@@ -7,11 +7,11 @@ from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 
 class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     def __init__(self, config):
-        super().__init__(config.seed, config.hidden_dimension)
+        super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
         self.n_users = config.n_users
         self.n_items = config.n_items
         self.lr = LearningRateScheduler(config.lr)
-        self.early_stopping = EarlyStopping(3)
+        self.early_stopping = EarlyStopping(2)
         self.l2_users = config.l2_users
         self.l2_items = config.l2_items
         self.l2_users_bias = config.l2_users_bias
@@ -22,7 +22,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                      'user_map', 'item_map', 'user_biases_gradient', 'item_biases_gradient']
         for arg in none_args:
             setattr(self, arg, None)
-        self.beta = 0.7
+        self.beta = 0.9
         self.results = {}
 
     def weight_init(self, user_map, item_map, global_bias):
@@ -48,10 +48,12 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.run_epoch(train, epoch)
             validation_error = self.prediction_error(validation)
             self.record(epoch, train_accuracy=self.prediction_error(train),
-                        test_accuracy = validation_error,
+                        test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stop(epoch, validation_error):
+            if self.early_stopping.stop(self,epoch, validation_error):
                 break
+        print(f"validation_error: {validation_error}")
+        return validation_error
 
     def run_epoch(self, data, epoch):
         lr = self.lr.update(epoch)
@@ -68,5 +70,3 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 v_grad = (error * self.U[user, :] - self.l2_items * self.V[item, :])
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item, :] += lr * self.items_h_gradient.get(v_grad, item)
-
-
