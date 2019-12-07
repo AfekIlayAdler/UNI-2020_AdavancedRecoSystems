@@ -19,12 +19,12 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
         self.number_bias_epochs = config.bias_epochs
-        none_args = ['global_bias', 'user_biases', 'item_biases', 'U', 'V', 'users_h_gradient', 'items_h_gradient',
-                     'user_map', 'item_map', 'user_biases_gradient', 'item_biases_gradient']
-        for arg in none_args:
-            setattr(self, arg, None)
         self.beta = 0.9
         self.results = {}
+        self.users_h_gradient = None
+        self.items_h_gradient = None
+        self.user_biases_gradient = None
+        self.item_biases_gradient = None
 
     # initialization of model's weights
     def weight_init(self, user_map, item_map, global_bias):
@@ -53,7 +53,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stop(self,epoch, validation_error):
+            if self.early_stopping.stop(self, epoch, validation_error):
                 break
         print(f"validation_error: {validation_error}")
         return validation_error

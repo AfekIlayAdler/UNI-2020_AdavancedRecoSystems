@@ -8,6 +8,13 @@ class MatrixFactorizationWithBiases:
         self.results = {}
         np.random.seed(seed)
         self.print_metrics = print_metrics
+        self.user_map = None
+        self.item_map = None
+        self.global_bias = None
+        self.user_biases = None
+        self.item_biases = None
+        self.U = None  # users matrix
+        self.V = None  # items matrix
 
     def get_results(self):
         return pd.DataFrame.from_dict(self.results)
@@ -57,10 +64,9 @@ class MatrixFactorizationWithBiases:
         nominator = 0
         for row in x:
             user, item, rating = row
-            denominator += np.square(self.predict_on_pair(user, item)-self.global_bias)
+            denominator += np.square(self.predict_on_pair(user, item) - self.global_bias)
             nominator += np.square(rating - self.predict_on_pair(user, item))
-        return float(nominator)/denominator
-
+        return float(nominator) / denominator
 
     def mse(self, x):
         e = 0
@@ -68,7 +74,6 @@ class MatrixFactorizationWithBiases:
             user, item, rating = row
             e += np.square(rating - self.predict_on_pair(user, item))
         return e / x.shape[0]
-
 
     def rmse(self, x):
         e = 0
@@ -92,7 +97,7 @@ class MatrixFactorizationWithBiases:
 
     def predict_on_pair(self, user, item):
         return np.clip(self.global_bias + self.user_biases[user] + self.item_biases[item] \
-               + self.U[user, :].dot(self.V[item, :].T),1,5)
+                       + self.U[user, :].dot(self.V[item, :].T), 1, 5)
 
     def predict_on_new_user_existing_item(self, item):
         return self.global_bias + self.item_biases[item]

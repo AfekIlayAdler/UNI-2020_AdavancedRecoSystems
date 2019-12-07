@@ -3,6 +3,7 @@ import numpy as np
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.optimization_objects import EarlyStopping
 
+
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     # initialization of model's parameters
     def __init__(self, config):
@@ -14,13 +15,8 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.l2_users_bias = config.l2_users_bias
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
-        self.early_stopping = EarlyStopping(3)
+        self.early_stopping = EarlyStopping(2)
         self.number_bias_epochs = config.bias_epochs
-        self.global_bias = None
-        self.user_biases = None
-        self.item_biases = None
-        self.U = None  # users matrix
-        self.V = None  # items matrix
         self.user_dict = {}
         self.item_dict = {}
         self.results = {}
@@ -34,6 +30,14 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         # Initialize the biases
         self.user_biases = np.zeros(self.n_users)
         self.item_biases = np.zeros(self.n_items)
+
+    def dict_init(self, df):
+        for user in range(self.n_users):  # get for current user all ratings, and items indices
+            self.user_dict[user] = {'items': df[df.user == user]['item'].values,
+                                    'ratings': df[df.user == user]['Ratings_Rating'].values}
+        for item in range(self.n_items):  # get for current item all ratings, and users indices
+            self.item_dict[item] = {'users': df[df.item == item]['user'].values,
+                                    'ratings': df[df.item == item]['Ratings_Rating'].values}
 
     def als_step(self):
         # users
@@ -50,7 +54,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             # user bias
             right_hand_side = np.sum(ratings - item_biases - self.global_bias - item_vecs.dot(self.U[u, :]))
             left_hand_side = 1 / (self.l2_users_bias + n_items)
-            self.user_biases[u] = left_hand_side*right_hand_side  # update current user biases
+            self.user_biases[u] = left_hand_side * right_hand_side  # update current user biases
         # items
         for i in range(self.n_items):
             # item hidden
@@ -65,19 +69,13 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             # item bias
             right_hand_side = np.sum(ratings - user_biases - self.global_bias - user_vecs.dot(self.V[i, :]))
             left_hand_side = 1 / (self.l2_items_bias + n_users)
-            self.item_biases[i] = left_hand_side*right_hand_side  # update current item biases
+            self.item_biases[i] = left_hand_side * right_hand_side  # update current item biases
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
         train = train.sort_values(by=['user', 'item'])
         validation = validation.sort_values(by=['user', 'item'])
-        for user in range(self.n_users):  # get for current user all ratings, and items indices
-            self.user_dict[user] = {'items': train[train.user == user]['item'].values,
-                                    'ratings': train[train.user == user]['Ratings_Rating'].values}
-        for item in range(self.n_items):  # get for current item all ratings, and users indices
-            self.item_dict[item] = {'users': train[train.item == item]['user'].values,
-                                    'ratings': train[train.item == item]['Ratings_Rating'].values}
-
+        self.dict_init(train)
         train, validation = train.values, validation.values
         self.weight_init(user_map, item_map)
         self.global_bias = np.mean(train[:, 2])
@@ -88,5 +86,9 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stop(epoch, validation_error):
+            if self.early_stopping.stop(self, epoch, validation_error):
                 break
+        print(f"validation_error: {validation_error}")
+        return validation_error
+
+
