@@ -3,18 +3,6 @@ import pandas as pd
 from HW1.config import USERS_COL_NAME, ITEMS_COL_NAME, USER_COL, ITEM_COL, RATING_COL_NAME
 
 
-class Config:
-    def __init__(self, **kwargs):
-        self._set_attributes(kwargs)
-
-    def _set_attributes(self, kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def add_attributes(self, **kwargs):
-        self._set_attributes(kwargs)
-
-
 def preprocess_for_mf(train, validation):
     train[USER_COL] = pd.factorize(train[USERS_COL_NAME])[0]
     train[ITEM_COL] = pd.factorize(train[ITEMS_COL_NAME])[0]
