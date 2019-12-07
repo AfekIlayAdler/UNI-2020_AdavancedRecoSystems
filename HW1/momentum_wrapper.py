@@ -3,8 +3,8 @@ import numpy as np
 
 class MomentumWrapper:
     def __init__(self, data, beta, n):
-        self.beta = beta
         self.data = data
+        self.beta = beta
         self.flag = {i: 0 for i in range(n)}
 
     def get(self, index, gradient) -> np.array:
