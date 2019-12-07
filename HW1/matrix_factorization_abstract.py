@@ -3,22 +3,25 @@ import pandas as pd
 
 
 class MatrixFactorizationWithBiases:
-    def __init__(self, seed, hidden_dimension):
+    def __init__(self, seed, hidden_dimension, print_metrics=True):
         self.h_len = hidden_dimension
         self.results = {}
         np.random.seed(seed)
+        self.print_metrics = print_metrics
 
     def get_results(self):
         return pd.DataFrame.from_dict(self.results)
 
     def record(self, epoch, **kwargs):
-        print(f"epoch # {epoch} : \n")
+        if self.print_metrics:
+            print(f"epoch # {epoch} : \n")
         for key, value in kwargs.items():
             key = f"{key}_{self.h_len}"
             if not self.results.get(key):
                 self.results[key] = []
             self.results[key].append(value)
-            print(f"{key} : {np.round(value, 5)}")
+            if self.print_metrics:
+                print(f"{key} : {np.round(value, 5)}")
 
     def fit(self, train: pd.DataFrame, validation: pd.DataFrame, user_map: dict, item_map: dict):
         pass
@@ -70,8 +73,8 @@ class MatrixFactorizationWithBiases:
             return self.mae(x)
 
     def predict_on_pair(self, user, item):
-        return self.global_bias + self.user_biases[user] + self.item_biases[item] \
-               + self.U[user, :].dot(self.V[item, :].T)
+        return np.clip(self.global_bias + self.user_biases[user] + self.item_biases[item] \
+               + self.U[user, :].dot(self.V[item, :].T),1,5)
 
     def predict_on_new_user_existing_item(self, item):
         return self.global_bias + self.item_biases[item]
@@ -81,3 +84,7 @@ class MatrixFactorizationWithBiases:
 
     def predict_on_new_user_new_item(self):
         return self.global_bias
+
+    def set_params(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
