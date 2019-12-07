@@ -7,3 +7,5 @@ RATING_COL_NAME = 'Ratings_Rating'
 
 USER_COL = 'user'
 ITEM_COL = 'item'
+
+HYPER_PARAM_SEARCH = False
