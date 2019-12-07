@@ -1,5 +1,5 @@
 class LearningRateScheduler:
-    def __init__(self, lr=0.01, decay=0.9):
+    def __init__(self, lr=0.01, decay=0.95):
         self.lr = lr
         self.decay = decay
 
@@ -10,20 +10,27 @@ class LearningRateScheduler:
 
 
 class EarlyStopping:
-    def __init__(self, n_iter, min_epoch=15):
+    def __init__(self, n_iter, min_epoch=15, annealing=True):
         """
         :param n_iter: if error is increasing for n_iter -> stop
         :param min_epoch: don't stop before min_epcoch
         """
         self.n_iter = n_iter
         self.last_value = 0
-        self.consecutive_increasing_errors = 0
+        self.consecutive_increasing_errors = 2
         self.min_epoch = min_epoch
+        self.annealing = annealing
+        self.annealing_counter = 0
 
-    def stop(self, epoch, error):
-        if error > self.last_value and epoch >= self.min_epoch:
-            self.consecutive_increasing_errors += 1
-        if self.consecutive_increasing_errors >= self.n_iter:
-            return True
+    def stop(self, mf, epoch, error):
+        if epoch >= self.min_epoch:
+            if self.annealing_counter >= 4:
+                return True
+            if error > self.last_value:
+                self.consecutive_increasing_errors += 1
+            if self.consecutive_increasing_errors >= self.n_iter:
+                mf.lr.lr *= 0.1
+                self.annealing_counter += 1
+                self.consecutive_increasing_errors = 0
         self.last_value = error
         return False
