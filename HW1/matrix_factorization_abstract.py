@@ -52,6 +52,24 @@ class MatrixFactorizationWithBiases:
             loss += regularizations[i] * np.sum(np.square(parameters[i]))
         return loss + self.prediction_error(x)
 
+    def r2(self, x):
+        denominator = 0
+        nominator = 0
+        for row in x:
+            user, item, rating = row
+            denominator += np.square(self.predict_on_pair(user, item)-self.global_bias)
+            nominator += np.square(rating - self.predict_on_pair(user, item))
+        return float(nominator)/denominator
+
+
+    def mse(self, x):
+        e = 0
+        for row in x:
+            user, item, rating = row
+            e += np.square(rating - self.predict_on_pair(user, item))
+        return e / x.shape[0]
+
+
     def rmse(self, x):
         e = 0
         for row in x:

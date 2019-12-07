@@ -34,3 +34,5 @@ class EarlyStopping:
                 self.consecutive_increasing_errors = 0
         self.last_value = error
         return False
+
+

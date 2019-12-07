@@ -6,6 +6,7 @@ from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 
 
 class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
+    # initialization of model's parameters
     def __init__(self, config):
         super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
         self.n_users = config.n_users
@@ -25,6 +26,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.beta = 0.9
         self.results = {}
 
+    # initialization of model's weights
     def weight_init(self, user_map, item_map, global_bias):
         self.global_bias = global_bias
         self.user_map, self.item_map = user_map, item_map
@@ -46,6 +48,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         for epoch in range(1, self.epochs + 1):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
+            # calculate train/validation error and loss
             validation_error = self.prediction_error(validation)
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
