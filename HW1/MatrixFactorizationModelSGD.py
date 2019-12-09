@@ -12,7 +12,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.n_users = config.n_users
         self.n_items = config.n_items
         self.lr = config.lr
-        self.early_stopping = EarlyStopping(2)
+        self.early_stopping = None
         self.l2_users = config.l2_users
         self.l2_items = config.l2_items
         self.l2_users_bias = config.l2_users_bias
@@ -43,6 +43,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
+        self.early_stopping = EarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
         train, validation = train.values, validation.values
         self.weight_init(user_map, item_map, np.mean(train[:, 2]))

@@ -10,7 +10,7 @@ class LearningRateScheduler:
 
 
 class EarlyStopping:
-    def __init__(self, n_iter, min_epoch=15,anneal_times = 4):
+    def __init__(self, n_iter=2, min_epoch=15, anneal_times=4):
         """
         :param n_iter: if error is increasing for n_iter -> stop
         :param min_epoch: don't stop before min_epcoch
@@ -34,7 +34,7 @@ class EarlyStopping:
                 mf.lr.lr *= 0.1
                 self.annealing_counter += 1
                 self.consecutive_increasing_errors = 0
-                print('#'*50 + 'learning rate annealed')
+                print('#' * 50 + 'learning rate annealed')
         self.last_value = error
         return False
 

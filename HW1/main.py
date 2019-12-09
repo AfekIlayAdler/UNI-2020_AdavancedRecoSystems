@@ -9,7 +9,7 @@ from skopt.callbacks import CheckpointSaver
 from HW1.MatrixFactorizationModelSGD import MatrixFactorizationWithBiasesSGD
 from HW1.MartixFactorizationModelALS import MatrixFactorizationWithBiasesALS
 from HW1.config import TRAIN_PATH, VALIDATION_PATH, HYPER_PARAM_SEARCH, ALS_SPACE, SGD, SGD_SPACE, SGD_CONFIG, \
-    ALS_CONFIG, HYPER_PARAM_SEARCH_N_ITER, SEED, CHECKPOINT_NAME, HYPER_PARAM_FILE_NAME
+    ALS_CONFIG, HYPER_PARAM_SEARCH_N_ITER, SEED, CHECKPOINT_NAME, HYPER_PARAM_FILE_NAME, x0, y0
 from HW1.utils import preprocess_for_mf
 
 space = SGD_SPACE if SGD else ALS_SPACE
@@ -32,9 +32,6 @@ def objective(**params):
 
 def run_exp(model):
     if HYPER_PARAM_SEARCH:
-        x0 = [[0.025, 0.01, 0.01, 0.001, 0.001, 18]]
-        y0 = [0.8945]
-
         checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
         res_gp = gp_minimize(objective, space, n_calls=HYPER_PARAM_SEARCH_N_ITER, random_state=SEED,
                              callback=[checkpoint_saver], x0=x0, y0=y0)
