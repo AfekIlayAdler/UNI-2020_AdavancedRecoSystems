@@ -32,9 +32,12 @@ def objective(**params):
 
 def run_exp(model):
     if HYPER_PARAM_SEARCH:
+        x0 = [[0.025, 0.01, 0.01, 0.001, 0.001, 18]]
+        y0 = [0.8945]
+
         checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
         res_gp = gp_minimize(objective, space, n_calls=HYPER_PARAM_SEARCH_N_ITER, random_state=SEED,
-                             callback=[checkpoint_saver])
+                             callback=[checkpoint_saver], x0=x0, y0=y0)
         print(res_gp.x)
         print(res_gp.fun)
         skopt.dump(res_gp, HYPER_PARAM_FILE_NAME)
