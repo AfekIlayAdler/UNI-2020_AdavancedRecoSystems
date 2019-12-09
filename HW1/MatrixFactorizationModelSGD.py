@@ -11,7 +11,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
         self.n_users = config.n_users
         self.n_items = config.n_items
-        self.lr = LearningRateScheduler(config.lr)
+        self.lr = config.lr
         self.early_stopping = EarlyStopping(2)
         self.l2_users = config.l2_users
         self.l2_items = config.l2_items
@@ -19,7 +19,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
         self.number_bias_epochs = config.bias_epochs
-        self.beta = 0.9
+        self.beta = config.beta
         self.results = {}
         self.users_h_gradient = None
         self.items_h_gradient = None
@@ -31,8 +31,8 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.global_bias = global_bias
         self.user_map, self.item_map = user_map, item_map
         # TODO understand if we can get a better initialization
-        self.U = np.random.normal(scale=1. / self.h_len, size=(self.n_users, self.h_len))
-        self.V = np.random.normal(scale=1. / self.h_len, size=(self.n_items, self.h_len))
+        self.U = np.random.normal(scale=0.2 / self.h_len, size=(self.n_users, self.h_len))
+        self.V = np.random.normal(scale=0.2 / self.h_len, size=(self.n_items, self.h_len))
         self.users_h_gradient = MomentumWrapper2D(self.n_users, self.h_len, self.beta)
         self.items_h_gradient = MomentumWrapper2D(self.n_items, self.h_len, self.beta)
         # Initialize the biases
@@ -43,6 +43,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
+        self.lr = LearningRateScheduler(self.lr)
         train, validation = train.values, validation.values
         self.weight_init(user_map, item_map, np.mean(train[:, 2]))
         for epoch in range(1, self.epochs + 1):
