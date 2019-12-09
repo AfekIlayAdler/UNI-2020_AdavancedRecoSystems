@@ -34,6 +34,7 @@ class EarlyStopping:
                 mf.lr.lr *= 0.1
                 self.annealing_counter += 1
                 self.consecutive_increasing_errors = 0
+                print('#'*50 + 'learning rate annealed')
         self.last_value = error
         return False
 
