@@ -13,8 +13,12 @@ class MatrixFactorizationWithBiases:
         self.global_bias = None
         self.user_biases = None
         self.item_biases = None
-        self.U = None  # users matrix
-        self.V = None  # items matrix
+        self.U = None
+        self.V = None
+        self.l2_users_bias = None
+        self.l2_items_bias = None
+        self.l2_users = None
+        self.l2_items = None
 
     def get_results(self):
         return pd.DataFrame.from_dict(self.results)
@@ -30,6 +34,10 @@ class MatrixFactorizationWithBiases:
             if self.print_metrics:
                 print(f"{key} : {np.round(value, 5)}")
 
+    def set_params(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
     def fit(self, train: pd.DataFrame, validation: pd.DataFrame, user_map: dict, item_map: dict):
         pass
 
@@ -43,12 +51,12 @@ class MatrixFactorizationWithBiases:
             if item:
                 prediction = self.predict_on_pair(user, item)
             else:
-                prediction = self.predict_on_existing_user_new_item(user)
+                prediction = self.global_bias + self.user_biases[user]
         else:
             if item:
-                prediction = self.predict_on_new_user_existing_item(item)
+                prediction = self.global_bias + self.item_biases[item]
             else:
-                prediction = self.predict_on_new_user_new_item()
+                prediction = self.global_bias
         return np.clip(prediction, 1, 5)
 
     def calc_loss(self, x):
@@ -57,7 +65,7 @@ class MatrixFactorizationWithBiases:
         regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
         for i in range(len(parameters)):
             loss += regularizations[i] * np.sum(np.square(parameters[i]))
-        return loss + self.prediction_error(x)
+        return loss + self.prediction_error(x, 'squared_error')
 
     def r2(self, x):
         denominator = 0
@@ -68,46 +76,22 @@ class MatrixFactorizationWithBiases:
             nominator += np.square(rating - self.predict_on_pair(user, item))
         return float(nominator) / denominator
 
-    def mse(self, x):
-        e = 0
-        for row in x:
-            user, item, rating = row
-            e += np.square(rating - self.predict_on_pair(user, item))
-        return e / x.shape[0]
-
-    def rmse(self, x):
-        e = 0
-        for row in x:
-            user, item, rating = row
-            e += np.square(rating - self.predict_on_pair(user, item))
-        return np.sqrt(e / x.shape[0])
-
-    def mae(self, x):
-        e = 0
-        for row in x:
-            user, item, rating = row
-            e += np.abs(rating - self.predict_on_pair(user, item))
-        return e / x.shape[0]
-
     def prediction_error(self, x, measure_function="rmse"):
-        if measure_function == "rmse":
-            return self.rmse(x)
-        elif measure_function == "mae":
-            return self.mae(x)
+        error_functions = {'rmse': np.square, 'mse': np.square,'squared_error': np.square, 'mae': np.abs}
+        error_function = error_functions[measure_function]
+        e = 0
+        for row in x:
+            user, item, rating = row
+            e += error_function(rating - self.predict_on_pair(user, item))
+        if measure_function == 'mse':
+            return e / x.shape[0]
+        elif measure_function == 'rmse':
+            return np.sqrt(e / x.shape[0])
+        elif measure_function == 'squared_error':
+            return e
+        else:
+            return e / x.shape[0]
 
     def predict_on_pair(self, user, item):
         return np.clip(self.global_bias + self.user_biases[user] + self.item_biases[item] \
                        + self.U[user, :].dot(self.V[item, :].T), 1, 5)
-
-    def predict_on_new_user_existing_item(self, item):
-        return self.global_bias + self.item_biases[item]
-
-    def predict_on_existing_user_new_item(self, user):
-        return self.global_bias + self.user_biases[user]
-
-    def predict_on_new_user_new_item(self):
-        return self.global_bias
-
-    def set_params(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
