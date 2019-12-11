@@ -37,7 +37,7 @@ def run_exp(model):
                              callback=[checkpoint_saver], x0=x0, y0=y0)
         print(res_gp.x)
         print(res_gp.fun)
-        skopt.dump(res_gp, HYPER_PARAM_FILE_NAME)
+        skopt.dump(res_gp, HYPER_PARAM_FILE_NAME,store_objective=False)
         plot_convergence(res_gp)
     else:
         model.fit(train, validation, user_map, item_map)
