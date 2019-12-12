@@ -15,7 +15,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.l2_users_bias = config.l2_users_bias
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
-        self.early_stopping = EarlyStopping(2)
+        self.early_stopping = EarlyStopping(n_iter=2)
         self.number_bias_epochs = config.bias_epochs
         self.user_dict = {}
         self.item_dict = {}
@@ -86,7 +86,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stop(self, epoch, validation_error):
+            if self.early_stopping.stopALS(epoch, validation_error):
                 break
         print(f"validation_error: {validation_error}")
         return validation_error
