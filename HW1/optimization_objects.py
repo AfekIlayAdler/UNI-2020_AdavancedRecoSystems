@@ -38,6 +38,18 @@ class EarlyStopping:
         self.last_value = error
         return False
 
+    def stopALS(self, epoch, error):
+        if epoch >= self.min_epoch:
+            if self.annealing_counter == self.anneal_times:
+                return True
+            if error > self.last_value:
+                self.consecutive_increasing_errors += 1
+            if self.consecutive_increasing_errors >= self.n_iter:
+                # anneal
+                self.annealing_counter += 1
+                self.consecutive_increasing_errors = 0
+        self.last_value = error
+        return False
 
 class Config:
     def __init__(self, **kwargs):
