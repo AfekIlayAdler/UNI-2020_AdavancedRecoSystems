@@ -1,7 +1,7 @@
 import numpy as np
 
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
-from HW1.optimization_objects import EarlyStopping
+from HW1.optimization_objects import SgdEarlyStopping, AlsEarlyStopping
 
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
@@ -15,7 +15,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         self.l2_users_bias = config.l2_users_bias
         self.l2_items_bias = config.l2_items_bias
         self.epochs = config.epochs
-        self.early_stopping = EarlyStopping(n_iter=2)
+        self.early_stopping = None
         self.number_bias_epochs = config.bias_epochs
         self.user_dict = {}
         self.item_dict = {}
@@ -73,6 +73,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
+        self.early_stopping = AlsEarlyStopping()
         train = train.sort_values(by=['user', 'item'])
         validation = validation.sort_values(by=['user', 'item'])
         self.dict_init(train)
@@ -86,7 +87,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             self.record(epoch, train_accuracy=self.prediction_error(train),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stopALS(epoch, validation_error):
+            if self.early_stopping.stop(epoch, validation_error):
                 break
         print(f"validation_error: {validation_error}")
         return validation_error

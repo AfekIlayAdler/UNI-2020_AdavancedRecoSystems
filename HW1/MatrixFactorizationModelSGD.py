@@ -1,6 +1,6 @@
 import numpy as np
 
-from HW1.optimization_objects import LearningRateScheduler, EarlyStopping
+from HW1.optimization_objects import LearningRateScheduler, SgdEarlyStopping
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 
@@ -43,7 +43,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def fit(self, train, validation, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
-        self.early_stopping = EarlyStopping()
+        self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
         train, validation = train.values, validation.values
         self.weight_init(user_map, item_map, np.mean(train[:, 2]))
