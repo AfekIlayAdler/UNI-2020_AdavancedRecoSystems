@@ -43,7 +43,7 @@ ALS_CONFIG = Config(
     l2_items=0.896846,
     l2_users_bias=0.870317,
     l2_items_bias=0.896482,
-    epochs=30,
+    epochs=5,
     bias_epochs=2,
     seed=SEED)
 
