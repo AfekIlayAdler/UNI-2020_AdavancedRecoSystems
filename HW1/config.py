@@ -47,7 +47,7 @@ ALS_CONFIG = Config(
     bias_epochs=2,
     seed=SEED)
 
-#best starting point
+# best starting point
 if SGD:
     x0 = [[0.025, 0.01, 0.01, 0.001, 0.001, 18]]
     y0 = [0.8945]
