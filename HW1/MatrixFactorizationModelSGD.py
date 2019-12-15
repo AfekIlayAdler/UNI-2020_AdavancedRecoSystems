@@ -52,8 +52,13 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.run_epoch(train, epoch)
             # calculate train/validation error and loss
             validation_error = self.prediction_error(validation)
-            self.record(epoch, train_accuracy=self.prediction_error(train),
-                        test_accuracy=validation_error,
+            self.record(epoch,
+                        train_mae=self.prediction_error(train, 'mae'),
+                        test_mae=self.prediction_error(validation, 'mae'),
+                        train_r2=self.prediction_error(train, 'r2'),
+                        test_r2=self.prediction_error(validation, 'r2'),
+                        train_rmse=self.prediction_error(train),
+                        test_rmse=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
             if self.early_stopping.stop(self, epoch, validation_error):
                 break
