@@ -83,8 +83,8 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         for epoch in range(1, self.epochs + 1):
             self.als_step()
             # calculate train/validation error and loss
-            validation_error = self.prediction_error(validation)
-            self.record(epoch, train_accuracy=self.prediction_error(train),
+            validation_error = self.prediction_error(validation,'rmse')
+            self.record(epoch, train_accuracy=self.prediction_error(train,'rmse'),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
             if self.early_stopping.stop(epoch, validation_error):
@@ -93,3 +93,21 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         return validation_error
 
 
+    def fit_all(self, train, user_map: dict, item_map: dict):
+        """data columns: [user id,movie_id,rating in 1-5]"""
+        self.early_stopping = AlsEarlyStopping()
+        train = train.sort_values(by=['user', 'item'])
+        self.dict_init(train)
+        train = train.values
+        self.weight_init(user_map, item_map)
+        self.global_bias = np.mean(train[:, 2])
+        for epoch in range(1, self.epochs + 1):
+            self.als_step()
+            # calculate train/validation error and loss
+            train_error = self.prediction_error(train,'rmse')
+            self.record(epoch, train_accuracy=train_error,
+                        train_loss=self.calc_loss(train))
+            if self.early_stopping.stop(epoch, train_error):
+                break
+        print(f"validation_error: {train_error}")
+        return train_error

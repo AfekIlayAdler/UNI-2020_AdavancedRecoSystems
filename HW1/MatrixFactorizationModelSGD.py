@@ -51,14 +51,34 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
             # calculate train/validation error and loss
-            validation_error = self.prediction_error(validation)
-            self.record(epoch, train_accuracy=self.prediction_error(train),
+            validation_error = self.prediction_error(validation,'rmse')
+            self.record(epoch, train_accuracy=self.prediction_error(train,'rmse'),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
             if self.early_stopping.stop(self, epoch, validation_error):
                 break
         print(f"validation_error: {validation_error}")
         return validation_error
+
+
+    def fit_all(self, train, user_map: dict, item_map: dict):
+        """data columns: [user id,movie_id,rating in 1-5]"""
+        self.early_stopping = SgdEarlyStopping()
+        self.lr = LearningRateScheduler(self.lr)
+        train = train.values
+        self.weight_init(user_map, item_map, np.mean(train[:, 2]))
+        for epoch in range(1, self.epochs + 1):
+            np.random.shuffle(train)
+            self.run_epoch(train, epoch)
+            # calculate train error and loss
+            train_error = self.prediction_error(train,'rmse')
+            self.record(epoch, train_accuracy=train_error,
+                        train_loss=self.calc_loss(train))
+            if self.early_stopping.stop(self, epoch, train_error):
+                break
+        print(f"train_error: {train_error}")
+        return train_error
+
 
     def run_epoch(self, data, epoch):
         lr = self.lr.update(epoch)

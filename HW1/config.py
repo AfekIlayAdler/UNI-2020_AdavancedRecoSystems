@@ -5,9 +5,10 @@ from HW1.optimization_objects import Config
 # sgd or als
 SGD = False
 # HYPER_PARAM_SEARCH or manual config
-HYPER_PARAM_SEARCH = True
+HYPER_PARAM_SEARCH = False
 HYPER_PARAM_SEARCH_N_ITER = 50
 SEED = 3
+LAST_RUN = True
 
 # hyper parameter tuning
 SGD_SPACE = [skopt.space.Real(0.005, 0.03, name='lr', prior='uniform'),
@@ -43,7 +44,7 @@ ALS_CONFIG = Config(
     l2_items=0.896846,
     l2_users_bias=0.870317,
     l2_items_bias=0.896482,
-    epochs=5,
+    epochs=30,
     bias_epochs=2,
     seed=SEED)
 
