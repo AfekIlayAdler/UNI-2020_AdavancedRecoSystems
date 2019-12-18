@@ -48,13 +48,13 @@ def run_exp(model):
 
 
 if __name__ == '__main__':
-    conf = SGD_CONFIG if SGD else ALS_CONFIG
+    train, validation = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
     if not LAST_RUN:
-        train, validation = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
         train, validation, user_map, item_map = preprocess_for_mf(train, validation)
     else:
-        train = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
-        train, user_map, item_map = preprocess_for_mf(train)
+        train = pd.read_csv(TRAIN_PATH)
+        train_all = pd.concat([train, validation], ignore_index=True)
+        train, user_map, item_map = preprocess_for_mf(train_all)
 
     n_users, n_items = len(user_map), len(item_map)
     mf = get_mf(n_users, n_items)
