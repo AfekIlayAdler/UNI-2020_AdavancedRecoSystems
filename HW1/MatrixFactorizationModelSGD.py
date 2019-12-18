@@ -76,7 +76,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                         train_loss=self.calc_loss(train))
             if self.early_stopping.stop(self, epoch, train_error):
                 break
-        print(f"train_error: {train_error}")
+        print(f"train_final_score: {train_error}")
         return train_error
 
 

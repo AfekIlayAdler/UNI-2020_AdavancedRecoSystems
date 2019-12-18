@@ -1,7 +1,7 @@
 import numpy as np
 
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
-from HW1.optimization_objects import SgdEarlyStopping, AlsEarlyStopping
+from HW1.optimization_objects import AlsEarlyStopping
 
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
@@ -109,5 +109,5 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
                         train_loss=self.calc_loss(train))
             if self.early_stopping.stop(epoch, train_error):
                 break
-        print(f"validation_error: {train_error}")
+        print(f"train_final_score: {train_error}")
         return train_error
