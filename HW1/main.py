@@ -4,12 +4,12 @@ import skopt
 
 from skopt import gp_minimize
 from skopt.plots import plot_convergence
-from skopt.callbacks import CheckpointSaver
+#from skopt.callbacks import CheckpointSaver
 
 from HW1.MatrixFactorizationModelSGD import MatrixFactorizationWithBiasesSGD
 from HW1.MartixFactorizationModelALS import MatrixFactorizationWithBiasesALS
 from HW1.config import TRAIN_PATH, VALIDATION_PATH, HYPER_PARAM_SEARCH, ALS_SPACE, SGD, SGD_SPACE, SGD_CONFIG, \
-    ALS_CONFIG, HYPER_PARAM_SEARCH_N_ITER, SEED, CHECKPOINT_NAME, HYPER_PARAM_FILE_NAME, x0, y0
+    ALS_CONFIG, HYPER_PARAM_SEARCH_N_ITER, SEED, CHECKPOINT_NAME, HYPER_PARAM_FILE_NAME, x0, y0, LAST_RUN
 from HW1.utils import preprocess_for_mf
 
 space = SGD_SPACE if SGD else ALS_SPACE
@@ -32,20 +32,30 @@ def objective(**params):
 
 def run_exp(model):
     if HYPER_PARAM_SEARCH:
-        checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
+        #checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
+        #callback=[checkpoint_saver]
         res_gp = gp_minimize(objective, space, n_calls=HYPER_PARAM_SEARCH_N_ITER, random_state=SEED,
-                             callback=[checkpoint_saver], x0=x0, y0=y0)
+                              x0=x0, y0=y0)
         print(res_gp.x)
         print(res_gp.fun)
         skopt.dump(res_gp, HYPER_PARAM_FILE_NAME,store_objective=False)
         plot_convergence(res_gp)
     else:
-        model.fit(train, validation, user_map, item_map)
+        if LAST_RUN:
+            model.fit_all(train, user_map, item_map)
+        else:
+            model.fit(train, validation, user_map, item_map)
 
 
 if __name__ == '__main__':
-    train, validation = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
-    train, validation, user_map, item_map = preprocess_for_mf(train, validation)
+    conf = SGD_CONFIG if SGD else ALS_CONFIG
+    if not LAST_RUN:
+        train, validation = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
+        train, validation, user_map, item_map = preprocess_for_mf(train, validation)
+    else:
+        train = pd.read_csv(TRAIN_PATH), pd.read_csv(VALIDATION_PATH)
+        train, user_map, item_map = preprocess_for_mf(train)
+
     n_users, n_items = len(user_map), len(item_map)
     mf = get_mf(n_users, n_items)
     run_exp(mf)
