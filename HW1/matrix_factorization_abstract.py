@@ -68,15 +68,16 @@ class MatrixFactorizationWithBiases:
         return loss + self.prediction_error(x, 'squared_error')
 
     def prediction_error(self, x, measure_function="rmse"):
-        error_functions = {'rmse': np.square, 'mse': np.square, 'squared_error': np.square, 'mae': np.abs, 'r2': np.square}
+        error_functions = {'rmse': np.square, 'mse': np.square, 'squared_error': np.square, 'mae': np.abs,
+                           'r2': np.square}
         error_function = error_functions[measure_function]
         e = 0
-        t=0
+        t = 0
         for row in x:
             user, item, rating = row
             e += error_function(rating - self.predict_on_pair(user, item))
             if measure_function == 'r2':
-                t+=error_function(rating - self.global_bias)
+                t += error_function(rating - self.global_bias)
         if measure_function == 'mse':
             return e / x.shape[0]
         elif measure_function == 'rmse':
@@ -84,7 +85,7 @@ class MatrixFactorizationWithBiases:
         elif measure_function == 'squared_error':
             return e
         elif measure_function == 'r2':
-            return 1-e/t
+            return 1 - e / t
         else:
             return e / x.shape[0]
 
