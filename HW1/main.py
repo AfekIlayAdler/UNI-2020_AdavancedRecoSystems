@@ -4,7 +4,7 @@ import skopt
 
 from skopt import gp_minimize
 from skopt.plots import plot_convergence
-#from skopt.callbacks import CheckpointSaver
+from skopt.callbacks import CheckpointSaver
 
 from HW1.MatrixFactorizationModelSGD import MatrixFactorizationWithBiasesSGD
 from HW1.MartixFactorizationModelALS import MatrixFactorizationWithBiasesALS
@@ -32,10 +32,11 @@ def objective(**params):
 
 def run_exp(model, train, user_map, item_map, validation=None, last_run=False):
     if HYPER_PARAM_SEARCH:
-        #checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
-        #callback=[checkpoint_saver]
+        checkpoint_saver = CheckpointSaver(CHECKPOINT_NAME)
         res_gp = gp_minimize(objective, space, n_calls=HYPER_PARAM_SEARCH_N_ITER, random_state=SEED,
-                              x0=x0, y0=y0)
+                             callback=[checkpoint_saver])
+
+
         print(res_gp.x)
         print(res_gp.fun)
         skopt.dump(res_gp, HYPER_PARAM_FILE_NAME,store_objective=False)
