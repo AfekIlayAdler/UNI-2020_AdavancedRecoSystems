@@ -3,7 +3,7 @@ import numpy as np
 from HW1.optimization_objects import LearningRateScheduler, SgdEarlyStopping
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
-
+from HW1.config import MEASURE
 
 class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     # initialization of model's parameters
@@ -51,8 +51,8 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
             # calculate train/validation error and loss
-            validation_error = self.prediction_error(validation,'rmse')
-            self.record(epoch, train_accuracy=self.prediction_error(train,'rmse'),
+            validation_error = self.prediction_error(validation, MEASURE)
+            self.record(epoch, train_accuracy=self.prediction_error(train, MEASURE),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
             if self.early_stopping.stop(self, epoch, validation_error):
@@ -71,7 +71,7 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
             # calculate train error and loss
-            train_error = self.prediction_error(train,'rmse')
+            train_error = self.prediction_error(train, MEASURE)
             self.record(epoch, train_accuracy=train_error,
                         train_loss=self.calc_loss(train))
             if self.early_stopping.stop(self, epoch, train_error):

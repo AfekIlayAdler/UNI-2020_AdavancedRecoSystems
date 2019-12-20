@@ -2,7 +2,7 @@ import numpy as np
 
 from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW1.optimization_objects import AlsEarlyStopping
-
+from HW1.config import MEASURE
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     # initialization of model's parameters
@@ -83,8 +83,8 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         for epoch in range(1, self.epochs + 1):
             self.als_step()
             # calculate train/validation error and loss
-            validation_error = self.prediction_error(validation,'rmse')
-            self.record(epoch, train_accuracy=self.prediction_error(train,'rmse'),
+            validation_error = self.prediction_error(validation, MEASURE)
+            self.record(epoch, train_accuracy=self.prediction_error(train, MEASURE),
                         test_accuracy=validation_error,
                         train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
             if self.early_stopping.stop(epoch, validation_error):
@@ -104,7 +104,7 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
         for epoch in range(1, self.epochs + 1):
             self.als_step()
             # calculate train/validation error and loss
-            train_error = self.prediction_error(train,'rmse')
+            train_error = self.prediction_error(train, MEASURE)
             self.record(epoch, train_accuracy=train_error,
                         train_loss=self.calc_loss(train))
             if self.early_stopping.stop(epoch, train_error):

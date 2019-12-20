@@ -3,12 +3,13 @@ import skopt
 from HW1.optimization_objects import Config
 
 # sgd or als
-SGD = False
+SGD = True
 # HYPER_PARAM_SEARCH or manual config
 HYPER_PARAM_SEARCH = False
 HYPER_PARAM_SEARCH_N_ITER = 50
 SEED = 3
 LAST_RUN = True
+MEASURE = 'mae'
 
 # hyper parameter tuning
 SGD_SPACE = [skopt.space.Real(0.005, 0.03, name='lr', prior='uniform'),
@@ -35,7 +36,7 @@ ALS_SPACE = [skopt.space.Real(0.1, 0.9, name='l2_users', prior='uniform'),
              skopt.space.Real(0.1, 0.9, name='l2_items', prior='uniform'),
              skopt.space.Real(0.1, 0.9, name='l2_users_bias', prior='uniform'),
              skopt.space.Real(0.1, 0.9, name='l2_items_bias', prior='uniform'),
-             skopt.space.Categorical([8], name='h_len')]
+             skopt.space.Categorical([8, 16, 20, 24], name='h_len')]
 
 ALS_CONFIG = Config(
     print_metrics=True,
@@ -53,7 +54,7 @@ if SGD:
     x0 = [[0.025, 0.01, 0.01, 0.001, 0.001, 18]]
     y0 = [0.8945]
 else:
-    x0 = [[0.77, 0.9, 0.9, 0.1, 8]]
+    x0 = [[0.892456, 0.897624, 0.110739, 0.565517, 8]]
     y0 = [0.915]
 
 TRAIN_PATH = 'data/Train.csv'
