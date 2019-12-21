@@ -38,15 +38,18 @@ class MatrixFactorizationWithBiases:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def fit(self, train: pd.DataFrame, validation: pd.DataFrame, user_map: dict, item_map: dict):
+    def fit(self, train: pd.DataFrame, user_map: dict, item_map: dict, validation: np.array = None):
         pass
 
     def predict(self, user, item):
         """
         predict on user and item with their original ids not internal ids
         """
-        user = user.get(self.user_map, None)
-        item = item.get(self.item_map, None)
+        user = self.user_map.get(user, None)
+        item = self.item_map.get(item, None)
+        # TODO: remove this check
+        if (user is None) or (item is None):
+            print('item or user is none')
         if user:
             if item:
                 prediction = self.predict_on_pair(user, item)
