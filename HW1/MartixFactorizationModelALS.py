@@ -1,8 +1,9 @@
 import numpy as np
 
-from HW1.matrix_factorization_abstract import MatrixFactorizationWithBiases
-from HW1.optimization_objects import AlsEarlyStopping
-from HW1.config import MEASURE
+from matrix_factorization_abstract import MatrixFactorizationWithBiases
+from optimization_objects import AlsEarlyStopping
+from config import MEASURE
+
 
 class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     # initialization of model's parameters
@@ -24,7 +25,6 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
     # initialization of model's weights
     def weight_init(self, user_map, item_map):
         self.user_map, self.item_map = user_map, item_map
-        # TODO understand if we can get a better initialization
         self.U = np.random.normal(scale=1. / self.h_len, size=(self.n_users, self.h_len))
         self.V = np.random.normal(scale=1. / self.h_len, size=(self.n_items, self.h_len))
         # Initialize the biases
@@ -71,27 +71,31 @@ class MatrixFactorizationWithBiasesALS(MatrixFactorizationWithBiases):
             left_hand_side = 1 / (self.l2_items_bias + n_users)
             self.item_biases[i] = left_hand_side * right_hand_side  # update current item biases
 
-    def fit(self, train, validation, user_map: dict, item_map: dict):
+    def fit(self, train, user_map: dict, item_map: dict, validation=None):
         """data columns: [user id,movie_id,rating in 1-5]"""
         self.early_stopping = AlsEarlyStopping()
         train = train.sort_values(by=['user', 'item'])
-        validation = validation.sort_values(by=['user', 'item'])
+        # validation = validation.sort_values(by=['user', 'item'])
         self.dict_init(train)
-        train, validation = train.values, validation.values
+        train = train.values
         self.weight_init(user_map, item_map)
         self.global_bias = np.mean(train[:, 2])
+        validation_error = None
         for epoch in range(1, self.epochs + 1):
             self.als_step()
             # calculate train/validation error and loss
-            validation_error = self.prediction_error(validation, MEASURE)
-            self.record(epoch, train_accuracy=self.prediction_error(train, MEASURE),
-                        test_accuracy=validation_error,
-                        train_loss=self.calc_loss(train), test_loss=self.calc_loss(validation))
-            if self.early_stopping.stop(epoch, validation_error):
-                break
-        print(f"validation_error: {validation_error}")
+            train_accuracy = self.prediction_error(train, MEASURE)
+            train_loss = self.calc_loss(train)
+            convergence_params = {'train_accuracy': train_accuracy, 'train_loss': train_loss}
+            if validation is not None:
+                validation_error = self.prediction_error(validation, MEASURE)
+                validation_loss = self.calc_loss(validation)
+                print(f"validation_error: {validation_error}")
+                if self.early_stopping.stop(epoch, validation_error):
+                    break
+                convergence_params.update({'test_accuracy': validation_error, 'test_loss': validation_loss})
+            self.record(epoch, **convergence_params)
         return validation_error
-
 
     def fit_all(self, train, user_map: dict, item_map: dict):
         """data columns: [user id,movie_id,rating in 1-5]"""
