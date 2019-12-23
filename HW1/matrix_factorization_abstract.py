@@ -27,7 +27,7 @@ class MatrixFactorizationWithBiases:
         if self.print_metrics:
             print(f"epoch # {epoch} : \n")
         for key, value in kwargs.items():
-            key = f"{key}_{self.h_len}"
+            key = f"{key}"
             if not self.results.get(key):
                 self.results[key] = []
             self.results[key].append(value)

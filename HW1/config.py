@@ -29,7 +29,7 @@ SGD_CONFIG = Config(
     l2_items=0.01,
     l2_users_bias=0.001,
     l2_items_bias=0.001,
-    epochs=30,
+    epochs=25,
     bias_epochs=5,
     seed=SEED)
 
