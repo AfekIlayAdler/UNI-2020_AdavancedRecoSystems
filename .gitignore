@@ -1,6 +1,5 @@
 
 *.pyc
 *.xml
-HW1/*.csv
 /HW1/HyperParamResult_sgd.pkl
 /HW1/HW1_Submission.docx
