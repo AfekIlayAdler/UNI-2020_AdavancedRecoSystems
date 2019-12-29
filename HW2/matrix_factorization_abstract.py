@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
-from utils import sigmoid
+from scipy.special import expit as logit
+
+from HW2.utils import sigmoid
+
 
 class MatrixFactorizationWithBiases:
     def __init__(self, seed, hidden_dimension, print_metrics=True):
@@ -10,7 +13,6 @@ class MatrixFactorizationWithBiases:
         self.print_metrics = print_metrics
         self.user_map = None
         self.item_map = None
-        self.global_bias = None
         self.user_biases = None
         self.item_biases = None
         self.U = None
@@ -24,15 +26,16 @@ class MatrixFactorizationWithBiases:
         return pd.DataFrame.from_dict(self.results)
 
     def record(self, epoch, **kwargs):
-        if self.print_metrics:
-            print(f"epoch # {epoch} : \n")
+        epoch = "{:02d}".format(epoch)
+        temp = f"| epoch   # {epoch} :"
         for key, value in kwargs.items():
-            key = f"{key}_{self.h_len}"
+            key = f"{key}"
             if not self.results.get(key):
                 self.results[key] = []
             self.results[key].append(value)
-            if self.print_metrics:
-                print(f"{key} : {np.round(value, 5)}")
+            val = '{:.2f}'.format(np.round(value, 2))
+            temp += f"{key} : {val}      |       "
+        print(temp)
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -100,5 +103,5 @@ class MatrixFactorizationWithBiases:
             return e / x.shape[0]
 
     def predict_on_pair(self, user, item):
-        return sigmoid(self.global_bias + self.user_biases[user] + self.item_biases[item] \
+        return sigmoid(self.user_biases[user] + self.item_biases[item] \
                        + self.U[user, :].dot(self.V[item, :].T))
