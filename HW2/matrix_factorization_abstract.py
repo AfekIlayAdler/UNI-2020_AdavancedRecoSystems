@@ -21,6 +21,7 @@ class MatrixFactorizationWithBiases:
         self.l2_items_bias = None
         self.l2_users = None
         self.l2_items = None
+        self.global_bias = None
 
     def get_results(self):
         return pd.DataFrame.from_dict(self.results)
@@ -33,7 +34,7 @@ class MatrixFactorizationWithBiases:
             if not self.results.get(key):
                 self.results[key] = []
             self.results[key].append(value)
-            val = '{:.2f}'.format(np.round(value, 2))
+            val = '{:.4}'.format(value)
             temp += f"{key} : {val}      |       "
         print(temp)
 
@@ -77,10 +78,11 @@ class MatrixFactorizationWithBiases:
         nll = 0
         for row in x:
             user, item, rating = row
-            error = rating * np.log(self.predict_on_pair(user, item))+(1-rating) * np.log(1-self.predict_on_pair(user, item))
-            nll += -1*error
-        return nll/x.shape[0]
+            error = rating * np.log(self.predict_on_pair(user, item)) + (1 - rating) * np.log(
+                1 - self.predict_on_pair(user, item))
+            nll += error
+        return -1 *( nll / x.shape[0])
 
     def predict_on_pair(self, user, item):
-        return sigmoid(self.user_biases[user] + self.item_biases[item] \
+        return sigmoid(self.global_bias + self.user_biases[user] + self.item_biases[item] \
                        + self.U[user, :].dot(self.V[item, :].T))
