@@ -1,5 +1,8 @@
-SEED = 5
 from pathlib import Path
+
+BPR = False
+
+SEED = 5
 
 #one_class_mf save configurations
 VALIDATION_FILE_NAME = 'one_class_mf_validation.csv'
@@ -11,15 +14,19 @@ ONE_CLASS_MF_LOAD_TRAIN_VALIDATION = True
 ONE_CLASS_MF_SAVE_NEGATIVE_SAMPLES = True
 ONE_CLASS_MF_LOAD_NEGATIVE_SAMPLES = True
 
+# results
+RESULT_DIR = Path('results')
+ONE_CLASS_MF_RESULT_FILE_NAME = 'one_class_mf_run_results.csv'
 
-
+# input configuration as recieved in the assignment
 TRAIN_PATH = 'data/Train.csv'
 RANDOM_TEST_PATH = 'data/RandomTest.csv'
 RANDOM_TEST_COL_NAME1 = 'Item1'
 RANDOM_TEST_COL_NAME2 = 'Item2'
 USERS_COL_NAME = 'UserID'
 ITEMS_COL_NAME = 'ItemID'
-# internal
+
+# internal column names
 USER_COL = 'user'
 ITEM_COL = 'item'
 RANK_COL = 'rank'
