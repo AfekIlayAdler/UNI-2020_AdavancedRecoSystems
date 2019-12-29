@@ -9,7 +9,7 @@ from nagative_sampler import NegativeSampler
 from validation_creator import ValidationCreator
 
 CONFIG = Config(
-    lr=0.01,
+    lr=0.001,
     print_metrics=True,
     beta=0.9,
     hidden_dimension=18,
@@ -18,11 +18,11 @@ CONFIG = Config(
     l2_users_bias=0.001,
     l2_items_bias=0.001,
     epochs=10,
-    bias_epochs=2,
+    bias_epochs=10,
     seed=SEED)
 
 if __name__ == "__main__":
-    train = pd.read_csv(TRAIN_PATH)
+    train = pd.read_csv(TRAIN_PATH, nrows=10 ** 5)
     create_directories([ONE_CLASS_MF_WEIGHT_DIR, RESULT_DIR])
     train, user_map, item_map = preprocess_for_mf(train)
     validation_creator = ValidationCreator()
@@ -34,4 +34,4 @@ if __name__ == "__main__":
     else:
         mf = OneClassMatrixFactorizationWithBiasesSGD(config, NegativeSampler())
         mf.fit(train, user_map, item_map, validation)
-        mf.get_results().to_csv(RESULT_DIR / ONE_CLASS_MF_RESULT_FILE_NAME, index = False)
+        mf.get_results().to_csv(RESULT_DIR / ONE_CLASS_MF_RESULT_FILE_NAME, index=False)
