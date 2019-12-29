@@ -71,36 +71,15 @@ class MatrixFactorizationWithBiases:
         regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
         for i in range(len(parameters)):
             loss += regularizations[i] * np.sum(np.square(parameters[i]))
-        return loss + self.negative_log_likelihood(x)
+        return loss
 
-    def negative_log_likelihood(self, x):
+    def prediction_error(self, x):
         nll = 0
         for row in x:
-            user, item, like = row
-            nll -= like * np.log(self.predict_on_pair(user, item))+(1-like) * np.log(1-self.predict_on_pair(user, item))
-        return  nll
-
-    def prediction_error(self, x, measure_function="rmse"):
-        error_functions = {'rmse': np.square, 'mse': np.square, 'squared_error': np.square, 'mae': np.abs,
-                           'r2': np.square}
-        error_function = error_functions[measure_function]
-        e = 0
-        t = 0
-        for row in x:
-            user, item, like = row
-            e += error_function(like - self.predict_on_pair(user, item))
-            if measure_function == 'r2':
-                t += error_function(like - self.global_bias)
-        if measure_function == 'mse':
-            return e / x.shape[0]
-        elif measure_function == 'rmse':
-            return np.sqrt(e / x.shape[0])
-        elif measure_function == 'squared_error':
-            return e
-        elif measure_function == 'r2':
-            return 1 - e / t
-        else:
-            return e / x.shape[0]
+            user, item, rating = row
+            error = rating * np.log(self.predict_on_pair(user, item))+(1-rating) * np.log(1-self.predict_on_pair(user, item))
+            nll += -1*error
+        return nll/x.shape[0]
 
     def predict_on_pair(self, user, item):
         return sigmoid(self.user_biases[user] + self.item_biases[item] \
