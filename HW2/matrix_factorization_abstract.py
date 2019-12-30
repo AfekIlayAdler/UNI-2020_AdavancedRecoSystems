@@ -66,7 +66,7 @@ class MatrixFactorizationWithBiases:
                 prediction = self.global_bias
         return np.clip(prediction, 1, 5)
 
-    def calc_loss(self, x):
+    def calc_loss(self):
         loss = 0
         parameters = [self.user_biases, self.item_biases, self.U, self.V]
         regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
@@ -78,10 +78,10 @@ class MatrixFactorizationWithBiases:
         nll = 0
         for row in x:
             user, item, rating = row
-            error = rating * np.log(self.predict_on_pair(user, item)) + (1 - rating) * np.log(
-                1 - self.predict_on_pair(user, item))
+            prediction = self.predict_on_pair(user, item)
+            error = rating * np.log(prediction) + (1 - rating) * np.log(1 - prediction)
             nll += error
-        return -1 *( nll / x.shape[0])
+        return -1 * (nll / x.shape[0])
 
     def predict_on_pair(self, user, item):
         return sigmoid(self.global_bias + self.user_biases[user] + self.item_biases[item] \

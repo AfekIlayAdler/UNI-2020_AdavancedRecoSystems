@@ -17,12 +17,12 @@ CONFIG = Config(
     l2_items=0.01,
     l2_users_bias=0.001,
     l2_items_bias=0.001,
-    epochs=10,
-    bias_epochs=10,
+    epochs=35,
+    bias_epochs=5,
     seed=SEED)
 
 if __name__ == "__main__":
-    train = pd.read_csv(TRAIN_PATH, nrows=10 ** 5)
+    train = pd.read_csv(TRAIN_PATH)
     create_directories([ONE_CLASS_MF_WEIGHT_DIR, RESULT_DIR])
     train, user_map, item_map = preprocess_for_mf(train)
     validation_creator = ValidationCreator()

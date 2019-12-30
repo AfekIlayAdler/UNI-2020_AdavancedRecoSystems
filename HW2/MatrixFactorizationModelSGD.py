@@ -3,6 +3,7 @@ import numpy as np
 from HW2.matrix_factorization_abstract import MatrixFactorizationWithBiases
 from HW2.momentum_wrapper import MomentumWrapper2D, MomentumWrapper1D
 from HW2.optimization_objects import SgdEarlyStopping, LearningRateScheduler
+from utils import sigmoid
 from validation_creator import create_validation_two_columns
 
 
@@ -54,13 +55,13 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.run_epoch(train_with_negative_samples, epoch)
             # calculate train/validation error and loss
             train_mean_NLL = self.prediction_error(train_with_negative_samples)
-            train_loss = self.calc_loss(train_with_negative_samples) + train_mean_NLL
+            train_loss = self.calc_loss() + train_mean_NLL
             convergence_params = {'train_MNLL': train_mean_NLL, 'train_loss': train_loss}
             if validation is not None:
                 if epoch == 1:
                     validation, validation_choose_between_two = create_validation_two_columns(validation)
                 validation_mean_NLL = self.prediction_error(validation)
-                validation_loss = self.calc_loss(validation) + validation_mean_NLL
+                validation_loss = self.calc_loss() + validation_mean_NLL
                 percent_right_choices = self.predict_which_item_more_likely(validation_choose_between_two)
                 # TODO change later to percent_right_choices
                 if self.early_stopping.stop(self, epoch, validation_mean_NLL):
@@ -74,20 +75,20 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         lr = self.lr.update(epoch)
         for row in data:
             user, item, rating = row
-            prediction = self.predict_on_pair(user, item)
-            if rating == 1:
-                constant_der = 1 - prediction
-            else:
-                constant_der = - prediction
-            constant_der *= -1
-            u_b_gradient = (constant_der - self.l2_users_bias * self.user_biases[user])
-            i_b_gradient = (constant_der - self.l2_items_bias * self.item_biases[item])
-            self.user_biases[user] += lr * self.user_biases_gradient.get(u_b_gradient, user)
-            self.item_biases[item] += lr * self.item_biases_gradient.get(i_b_gradient, item)
-            self.global_bias += lr * (0.9 * self.global_bias + 0.1 * constant_der)
+            prediction = self.global_bias + self.user_biases[user] + self.item_biases[item] \
+                       + self.U[user, :].dot(self.V[item, :].T)
+            constant_term = np.exp(-prediction) / (1 + np.exp(-prediction))
+            if rating == 0:
+                constant_term -= 1
+            constant_term *= -1
+            u_b_gradient = (constant_term + self.l2_users_bias * self.user_biases[user])
+            i_b_gradient = (constant_term + self.l2_items_bias * self.item_biases[item])
+            self.user_biases[user] -= lr * self.user_biases_gradient.get(u_b_gradient, user)
+            self.item_biases[item] -= lr * self.item_biases_gradient.get(i_b_gradient, item)
+            self.global_bias -= lr * constant_term
             if epoch > self.number_bias_epochs:
-                u_grad = (constant_der * self.V[item, :] - self.l2_users * self.U[user, :])
-                v_grad = (constant_der * self.U[user, :] - self.l2_items * self.V[item, :])
+                u_grad = (constant_term * self.V[item, :] + self.l2_users * self.U[user, :])
+                v_grad = (constant_term * self.U[user, :] + self.l2_items * self.V[item, :])
                 self.U[user, :] -= lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item, :] -= lr * self.items_h_gradient.get(v_grad, item)
 
