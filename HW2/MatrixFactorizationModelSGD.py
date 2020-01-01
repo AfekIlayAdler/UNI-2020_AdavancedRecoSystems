@@ -75,7 +75,20 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         lr = self.lr.update(epoch)
         for row in data:
             user, item, rating = row
-            prediction = self.global_bias + self.user_biases[user] + self.item_biases[item] \
+            prediction = self.predict_on_pair(user,item)
+            error = rating-prediction
+            u_b_gradient = (error - self.l2_users_bias * self.user_biases[user])
+            i_b_gradient = (error - self.l2_items_bias * self.item_biases[item])
+            self.user_biases[user] += lr * self.user_biases_gradient.get(u_b_gradient, user)
+            self.item_biases[item] += lr * self.item_biases_gradient.get(i_b_gradient, item)
+            self.global_bias += lr * error
+            if epoch > self.number_bias_epochs:
+                u_grad = (error * self.V[item, :] - self.l2_users * self.U[user, :])
+                v_grad = (error * self.U[user, :] - self.l2_items * self.V[item, :])
+                self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
+                self.V[item, :] += lr * self.items_h_gradient.get(v_grad, item)
+            """
+                        prediction = self.global_bias + self.user_biases[user] + self.item_biases[item] \
                        + self.U[user, :].dot(self.V[item, :].T)
             constant_term = np.exp(-prediction) / (1 + np.exp(-prediction))
             if rating == 0:
@@ -91,6 +104,8 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 v_grad = (constant_term * self.U[user, :] + self.l2_items * self.V[item, :])
                 self.U[user, :] -= lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item, :] -= lr * self.items_h_gradient.get(v_grad, item)
+            """
+
 
     def predict_which_item_more_likely(self, data):
         counter = 0
