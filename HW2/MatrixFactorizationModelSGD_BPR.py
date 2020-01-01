@@ -84,3 +84,5 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item_positive, :] += lr * self.items_h_gradient.get(v_p_grad, item_positive)
                 self.V[item_negative, :] += lr * self.items_h_gradient.get(v_n_grad, item_negative)
+
+                # test
