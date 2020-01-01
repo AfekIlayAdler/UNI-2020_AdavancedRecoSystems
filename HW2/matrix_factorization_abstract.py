@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from HW2.utils import sigmoid
-
 
 class MatrixFactorizationWithBiases:
     def __init__(self, seed, hidden_dimension, print_metrics=True):
@@ -52,15 +50,7 @@ class MatrixFactorizationWithBiases:
             loss += regularizations[i] * np.sum(np.square(parameters[i]))
         return loss
 
-    def prediction_error(self, x):
-        nll = 0
-        for row in x:
-            user, item, rating = row
-            prediction = sigmoid(self.predict_on_pair(user, item))
-            error = rating * np.log(prediction) + (1 - rating) * np.log(1 - prediction)
-            nll += error
-        return -1 * (nll / x.shape[0])
-
     def sigmoid_inner_scalar(self, user, item):
         return self.global_bias + self.user_biases[user] + self.item_biases[item] \
                + self.U[user, :].dot(self.V[item, :].T)
+

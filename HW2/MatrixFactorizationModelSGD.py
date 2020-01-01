@@ -54,13 +54,13 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             np.random.shuffle(train_with_negative_samples)
             self.run_epoch(train_with_negative_samples, epoch)
             # calculate train/validation error and loss
-            train_mean_NLL = self.prediction_error(train_with_negative_samples)
+            train_mean_NLL = self.mean_negative_log_likelihood(train_with_negative_samples)
             train_loss = self.l2_loss() + train_mean_NLL
             convergence_params = {'train_MNLL': train_mean_NLL, 'train_loss': train_loss}
             if validation is not None:
                 if epoch == 1:
                     validation, validation_choose_between_two = create_validation_two_columns(validation)
-                validation_mean_NLL = self.prediction_error(validation)
+                validation_mean_NLL = self.mean_negative_log_likelihood(validation)
                 validation_loss = self.l2_loss() + validation_mean_NLL
                 percent_right_choices = self.predict_which_item_more_likely(validation_choose_between_two)
                 # TODO change later to percent_right_choices
@@ -75,7 +75,7 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         lr = self.lr.update(epoch)
         for row in data:
             user, item, rating = row
-            prediction = sigmoid(self.sigmoid_inner_scalar(user,item))
+            prediction = sigmoid(self.sigmoid_inner_scalar(user, item))
             error = rating - prediction
             u_b_gradient = (error - self.l2_users_bias * self.user_biases[user])
             i_b_gradient = (error - self.l2_items_bias * self.item_biases[item])
@@ -87,25 +87,9 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 v_grad = (error * self.U[user, :] - self.l2_items * self.V[item, :])
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item, :] += lr * self.items_h_gradient.get(v_grad, item)
-            """
-                        prediction = self.global_bias + self.user_biases[user] + self.item_biases[item] \
-                       + self.U[user, :].dot(self.V[item, :].T)
-            constant_term = np.exp(-prediction) / (1 + np.exp(-prediction))
-            if rating == 0:
-                constant_term -= 1
-            constant_term *= -1
-            u_b_gradient = (constant_term + self.l2_users_bias * self.user_biases[user])
-            i_b_gradient = (constant_term + self.l2_items_bias * self.item_biases[item])
-            self.user_biases[user] -= lr * self.user_biases_gradient.get(u_b_gradient, user)
-            self.item_biases[item] -= lr * self.item_biases_gradient.get(i_b_gradient, item)
-            self.global_bias -= lr * constant_term
-            if epoch > self.number_bias_epochs:
-                u_grad = (constant_term * self.V[item, :] + self.l2_users * self.U[user, :])
-                v_grad = (constant_term * self.U[user, :] + self.l2_items * self.V[item, :])
-                self.U[user, :] -= lr * self.users_h_gradient.get(u_grad, user)
-                self.V[item, :] -= lr * self.items_h_gradient.get(v_grad, item)
-            """
 
+    def predict_on_pair(self, user, item):
+        return sigmoid(self.sigmoid_inner_scalar(user, item))
 
     def predict_which_item_more_likely(self, data):
         counter = 0
@@ -113,3 +97,12 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             user, positive_item, negative_item = row
             counter += self.predict_on_pair(user, positive_item) >= self.predict_on_pair(user, negative_item)
         return counter / data.shape[0]
+
+    def mean_negative_log_likelihood(self, x):
+        nll = 0
+        for row in x:
+            user, item, rating = row
+            prediction = sigmoid(self.predict_on_pair(user, item))
+            error = rating * np.log(prediction) + (1 - rating) * np.log(1 - prediction)
+            nll += error
+        return -1 * (nll / x.shape[0])
