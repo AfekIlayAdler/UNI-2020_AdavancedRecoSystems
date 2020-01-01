@@ -10,8 +10,8 @@ from validation_creator import create_validation_two_columns
 class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     # initialization of model's parameters
     def __init__(self, config, negative_sampler):
-        # TODO remove global bias
         super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
+        # TODO add momemntum to global bias
         self.negative_sampler = negative_sampler
         self.lr = config.lr
         self.early_stopping = None
