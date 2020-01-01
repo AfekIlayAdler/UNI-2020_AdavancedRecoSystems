@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from scipy.special import expit as logit
 
 from HW2.utils import sigmoid
 
@@ -45,28 +44,7 @@ class MatrixFactorizationWithBiases:
     def fit(self, train: pd.DataFrame, user_map: dict, item_map: dict, validation: np.array = None):
         pass
 
-    def predict(self, user, item):
-        """
-        predict on user and item with their original ids not internal ids
-        """
-        user = self.user_map.get(user, None)
-        item = self.item_map.get(item, None)
-        # TODO: remove this check
-        if (user is None) or (item is None):
-            print('item or user is none')
-        if user:
-            if item:
-                prediction = self.predict_on_pair(user, item)
-            else:
-                prediction = self.global_bias + self.user_biases[user]
-        else:
-            if item:
-                prediction = self.global_bias + self.item_biases[item]
-            else:
-                prediction = self.global_bias
-        return np.clip(prediction, 1, 5)
-
-    def calc_loss(self):
+    def l2_loss(self):
         loss = 0
         parameters = [self.user_biases, self.item_biases, self.U, self.V]
         regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
@@ -78,11 +56,11 @@ class MatrixFactorizationWithBiases:
         nll = 0
         for row in x:
             user, item, rating = row
-            prediction = self.predict_on_pair(user, item)
+            prediction = sigmoid(self.predict_on_pair(user, item))
             error = rating * np.log(prediction) + (1 - rating) * np.log(1 - prediction)
             nll += error
         return -1 * (nll / x.shape[0])
 
-    def predict_on_pair(self, user, item):
-        return sigmoid(self.global_bias + self.user_biases[user] + self.item_biases[item] \
-                       + self.U[user, :].dot(self.V[item, :].T))
+    def sigmoid_inner_scalar(self, user, item):
+        return self.global_bias + self.user_biases[user] + self.item_biases[item] \
+               + self.U[user, :].dot(self.V[item, :].T)

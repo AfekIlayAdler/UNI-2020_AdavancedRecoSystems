@@ -55,13 +55,13 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.run_epoch(train_with_negative_samples, epoch)
             # calculate train/validation error and loss
             train_mean_NLL = self.prediction_error(train_with_negative_samples)
-            train_loss = self.calc_loss() + train_mean_NLL
+            train_loss = self.l2_loss() + train_mean_NLL
             convergence_params = {'train_MNLL': train_mean_NLL, 'train_loss': train_loss}
             if validation is not None:
                 if epoch == 1:
                     validation, validation_choose_between_two = create_validation_two_columns(validation)
                 validation_mean_NLL = self.prediction_error(validation)
-                validation_loss = self.calc_loss() + validation_mean_NLL
+                validation_loss = self.l2_loss() + validation_mean_NLL
                 percent_right_choices = self.predict_which_item_more_likely(validation_choose_between_two)
                 # TODO change later to percent_right_choices
                 if self.early_stopping.stop(self, epoch, validation_mean_NLL):
@@ -75,8 +75,8 @@ class OneClassMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         lr = self.lr.update(epoch)
         for row in data:
             user, item, rating = row
-            prediction = self.predict_on_pair(user,item)
-            error = rating-prediction
+            prediction = sigmoid(self.sigmoid_inner_scalar(user,item))
+            error = rating - prediction
             u_b_gradient = (error - self.l2_users_bias * self.user_biases[user])
             i_b_gradient = (error - self.l2_items_bias * self.item_biases[item])
             self.user_biases[user] += lr * self.user_biases_gradient.get(u_b_gradient, user)

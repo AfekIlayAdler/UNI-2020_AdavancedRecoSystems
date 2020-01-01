@@ -3,8 +3,8 @@ import numpy as np
 from optimization_objects import LearningRateScheduler, SgdEarlyStopping
 from matrix_factorization_abstract import MatrixFactorizationWithBiases
 from momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
-from config import MEASURE
 from utils import sigmoid
+
 
 class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     # initialization of model's parameters
@@ -52,12 +52,14 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             np.random.shuffle(train)
             self.run_epoch(train, epoch)
             # calculate train/validation error and loss
-            train_accuracy = self.prediction_error(train, MEASURE)
-            train_loss = self.calc_loss(train)
-            convergence_params = {'train_accuracy': train_accuracy, 'train_loss': train_loss}
+            # TODO change train_error calculation and variable name
+            train_error = self.prediction_error(train)
+            train_loss = self.l2_loss(train) + train_error
+            convergence_params = {'train_accuracy': train_error, 'train_loss': train_loss}
             if validation is not None:
-                validation_error = self.prediction_error(validation, MEASURE)
-                validation_loss = self.calc_loss(validation)
+                # TODO change validation_error
+                validation_error = self.prediction_error(validation)
+                validation_loss = self.l2_loss(validation) + validation_error
                 print(f"validation_error: {validation_error}")
                 if self.early_stopping.stop(self, epoch, validation_error):
                     break
@@ -69,20 +71,20 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         lr = self.lr.update(epoch)
         for row in data:
             user, item_positive, rank = row
+            # TODO fix it to negative item
             item_negative = 1
-            error = (1 - sigmoid(self.predict_on_pair(user, item_positive) - self.predict_on_pair(user, item_negative)))
-            u_b_gradient = (- self.l2_users_bias * self.user_biases[user])
-            i_p_b_gradient = (error - self.l2_items_bias * self.item_biases[item_positive])
-            i_n_b_gradient = (error - self.l2_items_bias * self.item_biases[item_negative])
+            error = (1 - sigmoid(
+                self.sigmoid_inner_scalar(user, item_positive) - self.sigmoid_inner_scalar(user, item_negative)))
+            u_b_gradient = - self.l2_users_bias * self.user_biases[user]
+            i_p_b_gradient = error - self.l2_items_bias * self.item_biases[item_positive]
+            i_n_b_gradient = error - self.l2_items_bias * self.item_biases[item_negative]
             self.user_biases[user] += lr * self.user_biases_gradient.get(u_b_gradient, user)
             self.item_biases[item_positive] += lr * self.item_biases_gradient.get(i_p_b_gradient, item_positive)
             self.item_biases[item_negative] += lr * self.item_biases_gradient.get(i_n_b_gradient, item_positive)
             if epoch > self.number_bias_epochs:
-                u_grad = (error * (self.V[item_positive, :]-self.V[item_negative, :]) - self.l2_users * self.U[user, :])
+                u_grad = (error * (self.V[item_positive, :] - self.V[item_negative, :]) - self.l2_users * self.U[user,:])
                 v_p_grad = (error * self.U[user, :] - self.l2_items * self.V[item_positive, :])
                 v_n_grad = -(error * self.U[user, :] - self.l2_items * self.V[item_positive, :])
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item_positive, :] += lr * self.items_h_gradient.get(v_p_grad, item_positive)
                 self.V[item_negative, :] += lr * self.items_h_gradient.get(v_n_grad, item_negative)
-
-                # test
