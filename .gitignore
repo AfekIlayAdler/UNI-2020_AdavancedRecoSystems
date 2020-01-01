@@ -1,5 +1,8 @@
 
 *.pyc
 *.xml
-HW1/*.csv
 /HW1/HyperParamResult_sgd.pkl
+/HW1/HW1_Submission.docx
+/.idea/UNI-2020_AdavancedRecoSystems2.iml
+/.ipynb_checkpoints/data_exploration-checkpoint.ipynb
+/HW2/one_class_mf_weights_sgd/*

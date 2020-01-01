@@ -58,13 +58,11 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             if validation is not None:
                 validation_error = self.prediction_error(validation, MEASURE)
                 validation_loss = self.calc_loss(validation)
-                print(f"validation_error: {validation_error}")
                 if self.early_stopping.stop(self, epoch, validation_error):
                     break
-                convergence_params.update({'test_accuracy': validation_error, 'test_loss': validation_loss})
+                convergence_params.update({'validation_accuracy': validation_error, 'validation_loss': validation_loss})
             self.record(epoch, **convergence_params)
         return validation_error
-
 
     def run_epoch(self, data, epoch):
         lr = self.lr.update(epoch)
