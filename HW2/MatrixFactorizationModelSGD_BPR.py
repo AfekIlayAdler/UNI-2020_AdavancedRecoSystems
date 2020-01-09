@@ -6,12 +6,13 @@ from momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 from utils import sigmoid
 
 
-class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
+class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     # initialization of model's parameters
-    def __init__(self, config):
+    def __init__(self, config, negative_sampler):
         super().__init__(config.seed, config.hidden_dimension, config.print_metrics)
         self.n_users = config.n_users
         self.n_items = config.n_items
+        self.negative_sampler = negative_sampler
         self.lr = config.lr
         self.early_stopping = None
         self.l2_users = config.l2_users
@@ -46,11 +47,13 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
         train = train.values
-        self.weight_init(user_map, item_map, np.mean(train[:, 2]))
+        ####### was train[:, 2] before why?????
+        self.weight_init(user_map, item_map, np.mean(train[:, 1]))
         validation_error = None
         for epoch in range(1, self.epochs + 1):
+            train_with_negative_samples = self.negative_sampler.get(train, epoch)
             np.random.shuffle(train)
-            self.run_epoch(train, epoch)
+            self.run_epoch(train_with_negative_samples, epoch)
             # calculate train/validation error and loss
             # TODO change train_error calculation and variable name
             train_error = self.prediction_error(train)
@@ -58,21 +61,20 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             convergence_params = {'train_accuracy': train_error, 'train_loss': train_loss}
             if validation is not None:
                 # TODO change validation_error
-                validation_error = self.prediction_error(validation)
+                validation_error, percent_right_choices = self.prediction_error_accuracy(validation)
                 validation_loss = self.l2_loss(validation) + validation_error
                 print(f"validation_error: {validation_error}")
                 if self.early_stopping.stop(self, epoch, validation_error):
                     break
-                convergence_params.update({'test_accuracy': validation_error, 'test_loss': validation_loss})
+                convergence_params.update({'test_accuracy': validation_error, 'test_loss': validation_loss,'percent_right': percent_right_choices})
             self.record(epoch, **convergence_params)
         return validation_error
 
     def run_epoch(self, data, epoch):
         lr = self.lr.update(epoch)
         for row in data:
-            user, item_positive, rank = row
+            user, item_positive, item_negative = row
             # TODO fix it to negative item
-            item_negative = 1
             error = (1 - sigmoid(
                 self.sigmoid_inner_scalar(user, item_positive) - self.sigmoid_inner_scalar(user, item_negative)))
             u_b_gradient = - self.l2_users_bias * self.user_biases[user]
@@ -88,3 +90,18 @@ class MatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item_positive, :] += lr * self.items_h_gradient.get(v_p_grad, item_positive)
                 self.V[item_negative, :] += lr * self.items_h_gradient.get(v_n_grad, item_negative)
+
+    def predict_on_pair(self, user, item_positive, item_negative):
+        return self.sigmoid_inner_scalar(user, item_positive) - \
+               self.sigmoid_inner_scalar(user, item_negative)
+
+    def prediction_error_accuracy(self, x):
+        loss = 0
+        counter = 0
+        for row in x:
+            user, item_positive, item_negative = row
+            prediction = self.predict_on_pair(user, item_positive, item_negative)
+            counter += prediction >= 0
+            error = 1-sigmoid(prediction)
+            loss += error
+        return loss / x.shape[0], counter / x.shape[0]

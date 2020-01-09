@@ -1,6 +1,6 @@
 from config import RANDOM_TEST_PATH, RANDOM_TEST_COL_NAME1, USERS_COL_NAME, USER_COL, ITEM_COL, RANK_COL, \
-    ONE_CLASS_MF_WEIGHT_DIR, VALIDATION_FILE_NAME, ONE_CLASS_MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
-    ONE_CLASS_MF_SAVE_TRAIN_VALIDATION
+    MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
+    MF_SAVE_TRAIN_VALIDATION, BPR
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -12,8 +12,8 @@ negative_col = 'negative'
 class ValidationCreator:
     def __init__(self, method='popularity'):
         self.method = method
-        self.train_path = ONE_CLASS_MF_WEIGHT_DIR / TRAIN_FILE_NAME
-        self.validation_path = ONE_CLASS_MF_WEIGHT_DIR / VALIDATION_FILE_NAME
+        self.train_path = MF_WEIGHT_DIR / TRAIN_FILE_NAME
+        self.validation_path = MF_WEIGHT_DIR / VALIDATION_FILE_NAME
 
     def adjust_probabilities(self, p):
         p = p / p.sum()  # renormalize
@@ -41,22 +41,34 @@ class ValidationCreator:
         for user in tqdm(data[USER_COL].unique(), total=len(data[USER_COL].unique())):
             user_unique_items = set(data[data[USER_COL] == user][ITEM_COL].unique())
             user_items_did_not_rank = unique_items.difference(user_unique_items)
+            # choose from train sample of item the rank and didnt rank, add to validation and remove from train
             one_did_rank, one_did_not_rank = self.choose_items(user_unique_items, user_items_did_not_rank,
                                                                item_probabilities)
             validation.append([user, one_did_rank, one_did_not_rank])
             train = train[(train[USER_COL] != user) | ((train[USER_COL] == user) & (train[ITEM_COL] != one_did_rank))]
+            if BPR:
+                train_new = pd.DataFrame(columns=[USER_COL, positive_col, negative_col])
+                data_user = train[train[USER_COL] == user]
+                user_unique_items = set(data_user[ITEM_COL].unique())
+                user_items_did_not_rank = unique_items.difference(user_unique_items)
+                for item in user_unique_items:
+                    one_did_rank, one_did_not_rank = self.choose_items([item], user_items_did_not_rank,
+                                                                       item_probabilities)
+                    train_new.loc[len(train_new)] = [user, one_did_rank, one_did_not_rank]
+        if BPR:
+            train = train_new
         validation = pd.DataFrame(validation, columns=[USER_COL, positive_col, negative_col])
         return train, validation
 
     def get(self, train):
-        if self.train_path.exists() and ONE_CLASS_MF_LOAD_TRAIN_VALIDATION:
+        if self.train_path.exists() and MF_LOAD_TRAIN_VALIDATION:
             train, validation = pd.read_csv(self.train_path), pd.read_csv(self.validation_path)
         else:
             train, validation = self.split(train)
-        if ONE_CLASS_MF_SAVE_TRAIN_VALIDATION:
+        if MF_SAVE_TRAIN_VALIDATION:
             train.to_csv(self.train_path, index=False)
             validation.to_csv(self.validation_path, index=False)
-        return train,validation
+        return train, validation
 
 
 def create_validation_two_columns(data):

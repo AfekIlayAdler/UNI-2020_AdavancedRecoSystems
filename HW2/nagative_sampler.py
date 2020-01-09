@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from HW2.config import RANK_COL, ITEM_COL, USER_COL, ONE_CLASS_MF_WEIGHT_DIR, ONE_CLASS_MF_LOAD_TRAIN_VALIDATION, \
-    NEGATIVE_SAMPLES_FILE_NAME, ONE_CLASS_MF_LOAD_NEGATIVE_SAMPLES, ONE_CLASS_MF_SAVE_NEGATIVE_SAMPLES
+from HW2.config import RANK_COL, ITEM_COL, USER_COL, MF_WEIGHT_DIR, MF_LOAD_TRAIN_VALIDATION, \
+    NEGATIVE_SAMPLES_FILE_NAME, MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, BPR
 from tqdm import tqdm
 
 
@@ -21,6 +21,8 @@ class NegativeSampler:
         elif self.method == 'inverse_popularity':
             p = (1 / p)
             p = p / p.sum()
+        elif self.method == 'popularity':
+            p = p / p.sum()
         return p
 
     def add_negative_samples(self, data):
@@ -37,22 +39,28 @@ class NegativeSampler:
             p = pd.Series({i: item_probabilities[i] for i in user_items_did_not_rank})
             p = self.adjust_probabilities(p)
             df = pd.DataFrame()
+            # boolean indicator - sample wit replacement or not by #items user rank*2>total_items
             replace_or_not = len(user_items_did_not_rank) < len(user_unique_items) * self.sample_proportion
             df[ITEM_COL] = np.random.choice(p.index,
                                             size=int(len(user_unique_items) * self.sample_proportion),
                                             replace=replace_or_not, p=p.values)
             df[USER_COL] = user
             df[RANK_COL] = 0
-            data = pd.concat([data, df[col_order]])
+            data.sort_values(by=USER_COL, inplace=True)
+            df.sort_values(by=USER_COL, inplace=True)
+            if BPR:
+                data = pd.concat([data, df[col_order]], axis=1, sort=False, ignore_index=True)
+            else:
+                data = pd.concat([data, df[col_order]])
         return data
 
     def get(self, train, epoch):
         file_name = f"{NEGATIVE_SAMPLES_FILE_NAME}_{self.method}_epoch_{epoch}.csv"
-        path = ONE_CLASS_MF_WEIGHT_DIR / file_name
-        if path.exists() and ONE_CLASS_MF_LOAD_NEGATIVE_SAMPLES:
+        path = MF_WEIGHT_DIR / file_name
+        if path.exists() and MF_LOAD_NEGATIVE_SAMPLES:
             negative_samples = pd.read_csv(path)
         else:
             negative_samples = self.add_negative_samples(train)
-        if ONE_CLASS_MF_SAVE_NEGATIVE_SAMPLES:
+        if MF_SAVE_NEGATIVE_SAMPLES:
             negative_samples.to_csv(path, index=False)
         return negative_samples.values

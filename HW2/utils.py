@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from HW2.config import USERS_COL_NAME, ITEMS_COL_NAME, USER_COL, ITEM_COL
-from os import mkdir
+from os import mkdir, makedirs
 from os.path import isdir
 
 
@@ -33,4 +33,4 @@ def sigmoid(x):
 def create_directories(l):
     for directory_path in l:
         if not (isdir(directory_path)):
-            mkdir(directory_path)
+            makedirs(directory_path, exist_ok=True)

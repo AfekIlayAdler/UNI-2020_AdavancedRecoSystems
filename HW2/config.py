@@ -1,22 +1,31 @@
 from pathlib import Path
 
-BPR = False
-
+BPR = True
 SEED = 5
 
-#one_class_mf save configurations
-VALIDATION_FILE_NAME = 'one_class_mf_validation.csv'
-TRAIN_FILE_NAME = 'one_class_mf_train.csv'
-ONE_CLASS_MF_WEIGHT_DIR = Path('one_class_mf_weights_sgd')
-NEGATIVE_SAMPLES_FILE_NAME = 'negative_samples'
-ONE_CLASS_MF_SAVE_TRAIN_VALIDATION = True
-ONE_CLASS_MF_LOAD_TRAIN_VALIDATION = True
-ONE_CLASS_MF_SAVE_NEGATIVE_SAMPLES = True
-ONE_CLASS_MF_LOAD_NEGATIVE_SAMPLES = True
-
 # results
-RESULT_DIR = Path('results')
 ONE_CLASS_MF_RESULT_FILE_NAME = 'one_class_mf_run_results.csv'
+BPR_MF_RESULT_FILE_NAME = 'bpr_mf_run_results.csv'
+NEGATIVE_SAMPLES_FILE_NAME = 'negative_samples'
+
+MF_SAVE_TRAIN_VALIDATION = True
+MF_LOAD_TRAIN_VALIDATION = True
+MF_SAVE_NEGATIVE_SAMPLES = True
+MF_LOAD_NEGATIVE_SAMPLES = True
+
+if BPR:
+    RESULT_FILE_NAME = BPR_MF_RESULT_FILE_NAME
+    MF_WEIGHT_DIR = Path('bpr_mf_weights_sgd')
+    VALIDATION_FILE_NAME = 'bpr_mf_validation.csv'
+    TRAIN_FILE_NAME = 'bpr_class_mf_train.csv'
+    RESULT_DIR = Path(r'results/one_class')
+else:
+    # one_class_mf save configurations
+    RESULT_FILE_NAME = ONE_CLASS_MF_RESULT_FILE_NAME
+    VALIDATION_FILE_NAME = 'one_class_mf_validation.csv'
+    TRAIN_FILE_NAME = 'one_class_mf_train.csv'
+    MF_WEIGHT_DIR = Path('one_class_mf_weights_sgd')
+    RESULT_DIR = Path(r'results/one_class')
 
 # input configuration as recieved in the assignment
 TRAIN_PATH = 'data/Train.csv'
@@ -33,7 +42,5 @@ RANK_COL = 'rank'
 # TEST_PATH = 'data/Test.csv'
 
 # RATING_COL_NAME = 'Ratings_Rating'
-
-# model_name = 'sgd' if SGD else 'als'
 # CHECKPOINT_NAME = f"./checkpoint_{model_name}.pkl"
 # HYPER_PARAM_FILE_NAME = f"HyperParamResult_{model_name}.pkl"
