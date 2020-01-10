@@ -39,6 +39,8 @@ ITEMS_COL_NAME = 'ItemID'
 USER_COL = 'user'
 ITEM_COL = 'item'
 RANK_COL = 'rank'
+positive_col = 'positive'
+negative_col = 'negative'
 # TEST_PATH = 'data/Test.csv'
 
 # RATING_COL_NAME = 'Ratings_Rating'

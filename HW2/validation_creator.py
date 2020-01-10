@@ -1,13 +1,10 @@
 from config import RANDOM_TEST_PATH, RANDOM_TEST_COL_NAME1, USERS_COL_NAME, USER_COL, ITEM_COL, RANK_COL, \
     MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
-    MF_SAVE_TRAIN_VALIDATION, BPR
+    MF_SAVE_TRAIN_VALIDATION, BPR, positive_col, negative_col
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-
-positive_col = 'positive'
-negative_col = 'negative'
-
+import pickle
 
 class ValidationCreator:
     def __init__(self, method='popularity'):
@@ -46,17 +43,6 @@ class ValidationCreator:
                                                                item_probabilities)
             validation.append([user, one_did_rank, one_did_not_rank])
             train = train[(train[USER_COL] != user) | ((train[USER_COL] == user) & (train[ITEM_COL] != one_did_rank))]
-            if BPR:
-                train_new = pd.DataFrame(columns=[USER_COL, positive_col, negative_col])
-                data_user = train[train[USER_COL] == user]
-                user_unique_items = set(data_user[ITEM_COL].unique())
-                user_items_did_not_rank = unique_items.difference(user_unique_items)
-                for item in user_unique_items:
-                    one_did_rank, one_did_not_rank = self.choose_items([item], user_items_did_not_rank,
-                                                                       item_probabilities)
-                    train_new.loc[len(train_new)] = [user, one_did_rank, one_did_not_rank]
-        if BPR:
-            train = train_new
         validation = pd.DataFrame(validation, columns=[USER_COL, positive_col, negative_col])
         return train, validation
 

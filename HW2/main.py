@@ -1,7 +1,7 @@
 import pandas as pd
 
 from HW2.config import SEED, MF_WEIGHT_DIR, BPR, RESULT_DIR, RESULT_FILE_NAME
-from HW2.config import TRAIN_PATH
+from HW2.config import TRAIN_PATH,ITEM_COL
 from HW2.optimization_objects import Config
 from HW2.utils import preprocess_for_mf, create_directories
 from MatrixFactorizationModelSGD import OneClassMatrixFactorizationWithBiasesSGD
@@ -28,11 +28,13 @@ if __name__ == "__main__":
     train, user_map, item_map = preprocess_for_mf(train)
     validation_creator = ValidationCreator()
     train, validation = validation_creator.get(train)
+    # calculate the items popularity
+    item_probabilities = (train.iloc[:, 1].value_counts() / train.shape[0]).to_dict()
     config = CONFIG
     config.add_attributes(n_users=len(user_map), n_items=len(item_map))
     if BPR:
-        mf = BPRMatrixFactorizationWithBiasesSGD(config, NegativeSampler())
+        mf = BPRMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities))
     else:
-        mf = OneClassMatrixFactorizationWithBiasesSGD(config, NegativeSampler())
+        mf = OneClassMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities))
     mf.fit(train, user_map, item_map, validation)
     mf.get_results().to_csv(RESULT_DIR / RESULT_FILE_NAME, index=False)

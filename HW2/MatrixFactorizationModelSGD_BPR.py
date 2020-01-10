@@ -46,23 +46,21 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         """data columns: [user id,movie_id,like or not {0,1}]"""
         self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
-        train = train.values
-        ####### was train[:, 2] before why?????
-        self.weight_init(user_map, item_map, np.mean(train[:, 1]))
+        self.weight_init(user_map, item_map, len(train)/len(user_map)*len(item_map))
         validation_error = None
         for epoch in range(1, self.epochs + 1):
             train_with_negative_samples = self.negative_sampler.get(train, epoch)
-            np.random.shuffle(train)
+            np.random.shuffle(train_with_negative_samples)
             self.run_epoch(train_with_negative_samples, epoch)
             # calculate train/validation error and loss
             # TODO change train_error calculation and variable name
-            train_error = self.prediction_error(train)
-            train_loss = self.l2_loss(train) + train_error
-            convergence_params = {'train_accuracy': train_error, 'train_loss': train_loss}
+            train_error, accuracy = self.prediction_error_accuracy(train_with_negative_samples)
+            train_loss = self.l2_loss() + train_error
+            convergence_params = {'train_accuracy': accuracy, 'train_loss': train_loss}
             if validation is not None:
                 # TODO change validation_error
-                validation_error, percent_right_choices = self.prediction_error_accuracy(validation)
-                validation_loss = self.l2_loss(validation) + validation_error
+                validation_error, percent_right_choices = self.prediction_error_accuracy(validation.values)
+                validation_loss = self.l2_loss() + validation_error
                 print(f"validation_error: {validation_error}")
                 if self.early_stopping.stop(self, epoch, validation_error):
                     break
