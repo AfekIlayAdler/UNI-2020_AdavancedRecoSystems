@@ -34,3 +34,7 @@ def create_directories(l):
     for directory_path in l:
         if not (isdir(directory_path)):
             makedirs(directory_path, exist_ok=True)
+
+
+def get_item_probabilities(df):
+    return (df.iloc[:, 1].value_counts() / df.shape[0]).to_dict()
