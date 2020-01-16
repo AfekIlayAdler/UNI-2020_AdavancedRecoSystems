@@ -23,7 +23,7 @@ CONFIG = Config(
     seed=SEED)
 
 if __name__ == "__main__":
-    train = pd.read_csv(TRAIN_PATH, nrows=1000)
+    train = pd.read_csv(TRAIN_PATH, nrows=100000) #, nrows=5000
     create_directories([MF_WEIGHT_DIR, RESULT_DIR])
     train, user_map, item_map = preprocess_for_mf(train)
     validation_creator = ValidationCreator()
@@ -33,8 +33,8 @@ if __name__ == "__main__":
     config = CONFIG
     config.add_attributes(n_users=len(user_map), n_items=len(item_map))
     if BPR:
-        mf = BPRMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities))
+        mf = BPRMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities, method='popularity'))
     else:
-        mf = OneClassMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities))
+        mf = OneClassMatrixFactorizationWithBiasesSGD(config, NegativeSampler(item_probabilities, method='popularity'))
     mf.fit(train, user_map, item_map, validation)
     mf.get_results().to_csv(RESULT_DIR / RESULT_FILE_NAME, index=False)

@@ -67,17 +67,14 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 if self.early_stopping.stop(self, epoch, validation_error):
                     break
                 convergence_params.update({'test_error': validation_error, 'test_ML': validation_loss, 'test_percent_right': validation_accuracy})
-                if epoch==self.epochs:
-                    precision = self.precision_k(validation, train_with_negative_samples, item_map)
-                    precision = np.array(precision)
-                    for k in [5, 10, 15]:
-                        filtered_k = precision[precision<=k]
-                        mpr = filtered_k.shape[0]/precision.shape[0]
-                        convergence_params.update({f'precision@{k}': mpr})
+                #if epoch==self.epochs:
+                precision = self.precision_k(validation, train_with_negative_samples, item_map)
+                precision = np.array(precision)
+                for k in [5, 10, 500]:
+                    filtered_k = precision[precision <= k]
+                    mpr = (filtered_k.shape[0]/precision.shape[0])*100
+                    convergence_params.update({f'precision@{k}': mpr})
                 self.record(epoch, **convergence_params)
-
-
-
         return validation_error
 
     def run_epoch(self, data, epoch):
@@ -95,9 +92,9 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             self.item_biases[item_positive] += lr * self.item_biases_gradient.get(i_p_b_gradient, item_positive)
             self.item_biases[item_negative] += lr * self.item_biases_gradient.get(i_n_b_gradient, item_positive)
             if epoch > self.number_bias_epochs:
-                u_grad = (error * (self.V[item_positive, :] - self.V[item_negative, :]) - self.l2_users * self.U[user,:])
-                v_p_grad = (error * self.U[user, :] - self.l2_items * self.V[item_positive, :])
-                v_n_grad = (error * (-self.U[user, :]) - self.l2_items * self.V[item_positive, :])
+                u_grad = error * (self.V[item_positive, :] - self.V[item_negative, :]) - self.l2_users * self.U[user,:]
+                v_p_grad = error * self.U[user, :] - self.l2_items * self.V[item_positive, :]
+                v_n_grad = error * (-self.U[user, :]) - self.l2_items * self.V[item_positive, :]
                 self.U[user, :] += lr * self.users_h_gradient.get(u_grad, user)
                 self.V[item_positive, :] += lr * self.items_h_gradient.get(v_p_grad, item_positive)
                 self.V[item_negative, :] += lr * self.items_h_gradient.get(v_n_grad, item_negative)
@@ -136,8 +133,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             user, item_positive, item_negative = row
             prediction = self.predict_on_pair(user, item_positive, item_negative)
             counter += prediction >= 0
-            error = 1-sigmoid(prediction)
-            loss += error
+            loss += 1-sigmoid(prediction)
         accuracy = counter / x.shape[0]
         mean_loss = loss / x.shape[0]
         return mean_loss, accuracy
