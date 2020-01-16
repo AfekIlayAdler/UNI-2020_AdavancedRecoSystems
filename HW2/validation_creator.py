@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import pickle
 
+
 class ValidationCreator:
     def __init__(self, method='popularity'):
         self.method = method
@@ -23,7 +24,7 @@ class ValidationCreator:
         positive_and_negative = []
         for i, items in enumerate([did_rank, did_not_rank]):
             p = pd.Series({i: item_probabilities[i] for i in items})
-            #p = p / p.sum()
+            # p = p / p.sum()
             p = self.adjust_probabilities(p)
             positive_and_negative.append(np.random.choice(p.index, p=p.values, size=1)[0])
         return positive_and_negative

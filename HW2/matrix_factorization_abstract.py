@@ -44,8 +44,8 @@ class MatrixFactorizationWithBiases:
 
     def l2_loss(self):
         loss = 0
-        parameters = [self.user_biases, self.item_biases, self.U, self.V]
-        regularizations = [self.l2_users_bias, self.l2_items_bias, self.l2_users, self.l2_items]
+        parameters = [self.item_biases, self.U, self.V]
+        regularizations = [self.l2_items_bias, self.l2_users, self.l2_items]
         for i in range(len(parameters)):
             loss += regularizations[i] * np.sum(np.square(parameters[i]))
         return loss
