@@ -13,7 +13,7 @@ class ValidationCreator:
         self.validation_path = MF_WEIGHT_DIR / VALIDATION_FILE_NAME
 
     def adjust_probabilities(self, p):
-        p = p / p.sum()  # renormalize
+        p = p / p.sum()  # renormalize - so sum of probabilities will sum to 1
         if self.method == 'uniform':
             p = pd.Series(1 / p.size, p.index)
         return p
@@ -23,7 +23,7 @@ class ValidationCreator:
         positive_and_negative = []
         for i, items in enumerate([did_rank, did_not_rank]):
             p = pd.Series({i: item_probabilities[i] for i in items})
-            p = p / p.sum()
+            #p = p / p.sum()
             p = self.adjust_probabilities(p)
             positive_and_negative.append(np.random.choice(p.index, p=p.values, size=1)[0])
         return positive_and_negative

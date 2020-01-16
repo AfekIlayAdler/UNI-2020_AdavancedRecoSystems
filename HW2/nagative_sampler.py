@@ -22,8 +22,8 @@ class NegativeSampler:
         elif self.method == 'inverse_popularity':
             p = (1 / p)
             p = p / p.sum()
-        elif self.method == 'popularity':
-            p = p / p.sum()
+        # elif self.method == 'popularity':
+        #     p = p / p.sum()
         return p
 
     def add_negative_samples(self, data):
@@ -41,7 +41,7 @@ class NegativeSampler:
             p = pd.Series({i: self.item_probabilities[i] for i in user_items_did_not_rank})
             p = self.adjust_probabilities(p)
             df = pd.DataFrame()
-            # boolean indicator - sample wit replacement or not by #items user rank*2>total_items
+            # boolean indicator - sample with replacement or not by #items user rank*2>total_items
             replace_or_not = len(user_items_did_not_rank) < len(user_unique_items) * self.sample_proportion
             df[ITEM_COL] = np.random.choice(p.index,
                                             size=int(len(user_unique_items) * self.sample_proportion),
