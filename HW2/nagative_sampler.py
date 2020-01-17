@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from HW2.config import RANK_COL, ITEM_COL, USER_COL, MF_WEIGHT_DIR, MF_LOAD_TRAIN_VALIDATION, \
-    NEGATIVE_SAMPLES_FILE_NAME, MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, BPR, positive_col, negative_col
+    NEGATIVE_SAMPLES_FILE_NAME, MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, BPR, POSITIVE_COL, negative_col
 from tqdm import tqdm
 
 
@@ -50,9 +50,9 @@ class NegativeSampler:
         if BPR:
             df = pd.concat(df_list)
             df.sort_values(by=USER_COL, inplace=True)
-            data = data.rename(columns={ITEM_COL: positive_col})
+            data = data.rename(columns={ITEM_COL: POSITIVE_COL})
             data[negative_col] = df[ITEM_COL].values
-            data = data[[USER_COL, positive_col, negative_col]]
+            data = data[[USER_COL, POSITIVE_COL, negative_col]]
         else:
             df = pd.concat(df_list)
             data = pd.concat([data, df[col_order]])

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import expit
 
-from HW2.config import USER_COL, K_LIST_FOR_PRECISION_AT_K, positive_col, ITEM_COL, SEED
+from HW2.config import USER_COL, K_LIST_FOR_PRECISION_AT_K, POSITIVE_COL, ITEM_COL, SEED
 from matrix_factorization_abstract import MatrixFactorizationWithBiases
 from momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 from nagative_sampler import NegativeSampler
@@ -95,7 +95,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         unique_items = set([i for i in range(self.n_items)])
         ranks = np.zeros(self.n_users)
         for user in range(self.n_users):
-            user_validation_item = val[val[USER_COL] == user][positive_col].values[0]
+            user_validation_item = val[val[USER_COL] == user][POSITIVE_COL].values[0]
             user_unique_items = set(train[train[USER_COL] == user][ITEM_COL])
             user_items_did_not_rank = list(unique_items.difference(user_unique_items))
             user_items_did_not_rank_likelihood = pd.Series(expit(self.V.dot(self.U[user, :]) + self.item_biases)).take(
