@@ -8,7 +8,7 @@ from MatrixFactorizationModelSGD_BPR import BPRMatrixFactorizationWithBiasesSGD
 from validation_creator import ValidationCreator
 
 CONFIG = Config(
-    lr=0.01,
+    lr=0.025,
     print_metrics=True,
     beta=0.9,
     hidden_dimension=18,
