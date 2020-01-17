@@ -32,7 +32,8 @@ class MatrixFactorizationWithBiases:
                 self.results[key] = []
             self.results[key].append(value)
             val = '{:.4}'.format(value)
-            temp += f"{key} : {val}      |       "
+            result = "{:<15}".format(F"  {key} : {val}")
+            temp += result
         print(temp)
 
     def set_params(self, **kwargs):
