@@ -67,8 +67,6 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                 precision_at_k_dict = self.calculate_precision_at_k(train, validation)
                 convergence_params.update(precision_at_k_dict)
                 self.record(epoch, **convergence_params)
-                # print(pd.Series(convergence_params).to_frame().T.to_string())
-
         return validation_error
 
     def run_epoch(self, data, epoch):
