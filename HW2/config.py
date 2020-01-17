@@ -1,6 +1,5 @@
 from pathlib import Path
 
-BPR = True
 SEED = 5
 
 # results
@@ -14,20 +13,11 @@ MF_SAVE_NEGATIVE_SAMPLES = True
 MF_LOAD_NEGATIVE_SAMPLES = True
 
 K_LIST_FOR_PRECISION_AT_K = [5, 10, 100, 500]
-
-if BPR:
-    RESULT_FILE_NAME = BPR_MF_RESULT_FILE_NAME
-    MF_WEIGHT_DIR = Path('bpr_mf_weights_sgd')
-    VALIDATION_FILE_NAME = 'bpr_mf_validation.csv'
-    TRAIN_FILE_NAME = 'bpr_class_mf_train.csv'
-    RESULT_DIR = Path(r'results/one_class')
-else:
-    # one_class_mf save configurations
-    RESULT_FILE_NAME = ONE_CLASS_MF_RESULT_FILE_NAME
-    VALIDATION_FILE_NAME = 'one_class_mf_validation.csv'
-    TRAIN_FILE_NAME = 'one_class_mf_train.csv'
-    MF_WEIGHT_DIR = Path('one_class_mf_weights_sgd')
-    RESULT_DIR = Path(r'results/one_class')
+RESULT_FILE_NAME = BPR_MF_RESULT_FILE_NAME
+MF_WEIGHT_DIR = Path('bpr_mf_weights_sgd')
+VALIDATION_FILE_NAME = 'bpr_mf_validation.csv'
+TRAIN_FILE_NAME = 'bpr_class_mf_train.csv'
+RESULT_DIR = Path(r'results/one_class')
 
 # input configuration as recieved in the assignment
 TRAIN_PATH = 'data/Train.csv'
