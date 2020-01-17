@@ -1,14 +1,13 @@
 import numpy as np
-from IPython.core.display import display, HTML
+import pandas as pd
+from scipy.special import expit
 
-from nagative_sampler import NegativeSampler
-from optimization_objects import LearningRateScheduler, SgdEarlyStopping
+from HW2.config import USER_COL, K_LIST_FOR_PRECISION_AT_K
 from matrix_factorization_abstract import MatrixFactorizationWithBiases
 from momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
-from HW2.config import ITEM_COL, USER_COL, positive_col, negative_col
-
+from nagative_sampler import NegativeSampler
+from optimization_objects import LearningRateScheduler, SgdEarlyStopping
 from utils import sigmoid, get_item_probabilities
-import pandas as pd
 
 
 class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
@@ -54,18 +53,21 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             train_with_negative_samples = self.negative_sampler.get(train, epoch)
             np.random.shuffle(train_with_negative_samples)
             self.run_epoch(train_with_negative_samples, epoch)
-            train_percent_right, train_log_likelihood = self.percent_right_and_log_likelihood(train_with_negative_samples)
+            train_percent_right, train_log_likelihood = self.percent_right_and_log_likelihood(
+                train_with_negative_samples)
             train_objective = train_log_likelihood - self.l2_loss()
             convergence_params = {'train_objective': train_objective, 'train_percent_right': train_percent_right}
             if validation is not None:
-                validation_percent_right, validation_log_likelihood = self.percent_right_and_log_likelihood(validation.values)
+                validation_percent_right, validation_log_likelihood = self.percent_right_and_log_likelihood(
+                    validation.values)
                 if self.early_stopping.stop(self, epoch, validation_log_likelihood):
                     break
-                convergence_params.update({'validation_objective': validation_log_likelihood, 'validation_percent_right': validation_percent_right})
-                # precision_at_k_dict = self.get_precision_at_k_dict()
-                # convergence_params.update(precision_at_k_dict)
-                # self.record(epoch, **convergence_params)
-                print(pd.Series(convergence_params).to_frame().T.to_string())
+                convergence_params.update({'validation_objective': validation_log_likelihood,
+                                           'validation_percent_right': validation_percent_right})
+                precision_at_k_dict = self.calculate_precision_at_k(train, validation)
+                convergence_params.update(precision_at_k_dict)
+                self.record(epoch, **convergence_params)
+                # print(pd.Series(convergence_params).to_frame().T.to_string())
 
         return validation_error
 
@@ -90,27 +92,20 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         return self.item_biases[item_positive] - self.item_biases[item_negative] + \
                self.U[user, :].dot(self.V[item_positive, :].T - self.V[item_negative, :].T)
 
-    def calculate_precision_at_k(self):
-        # TODO make it more sexy
-        pass
-        # unique_items = set(item_map.values())
-        # unique_users_in_validation = val[USER_COL].unique()
-        # results = []
-        # for user in unique_users_in_validation:
-        #     current_user_val = val[val[USER_COL] == user]
-        #     user_unique_items = set(train[train[:, 0] == user][:, 1])
-        #     user_items_did_not_rank = list(unique_items.difference(user_unique_items))
-        #     likelihood = {}
-        #     for did_not_rank in user_items_did_not_rank:
-        #         likelihood[did_not_rank] = self.predict_likelihood(user, did_not_rank)
-        #     likelihood = pd.DataFrame.from_dict(likelihood, orient='index', columns=['likelihood'])
-        #     likelihood.sort_values(by=['likelihood'], inplace=True, ascending=False)
-        #     likelihood = likelihood.reset_index().rename(columns={'index': 'item'})
-        #     for row in current_user_val.values:
-        #         user, item_positive, item_negative = row
-        #         index_in_likelihood = likelihood[likelihood['item'] == item_positive].index[0]
-        #         results.append(index_in_likelihood)
-        # return results
+    def calculate_precision_at_k(self, train, val):
+        unique_items = set([i for i in range(self.n_items)])
+        ranks = np.zeros(self.n_users)
+        for user in range(self.n_users):
+            user_validation_item = val[val[USER_COL] == user]['positive'].values[0]
+            user_unique_items = set(train[train['user'] == user]['item'])
+            user_items_did_not_rank = list(unique_items.difference(user_unique_items))
+            user_items_did_not_rank_likelihood = pd.Series(expit(self.V.dot(self.U[user, :]) + self.item_biases)).take(
+                user_items_did_not_rank)
+            ranks[user] = user_items_did_not_rank_likelihood.rank(ascending=False)[user_validation_item]
+        results_dict = {}
+        for k in K_LIST_FOR_PRECISION_AT_K:
+            results_dict[F"precision_at_{k}"] = np.sum(ranks <= k) / self.n_users
+        return results_dict
 
     def predict_likelihood(self, user, item):
         return sigmoid(self.sigmoid_inner_scalar(user, item))
