@@ -60,12 +60,11 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             if validation is not None:
                 validation_percent_right, validation_log_likelihood = self.percent_right_and_log_likelihood(
                     validation.values)
-                if self.early_stopping.stop(self, epoch, validation_log_likelihood):
+                if self.early_stopping.stop(self, epoch, validation_percent_right):
                     break
                 convergence_params.update({'validation_objective': validation_log_likelihood,
                                            'validation_percent_right': validation_percent_right})
-                precision_at_k_dict = self.calculate_precision_at_k(train, validation)
-                convergence_params.update(precision_at_k_dict)
+                convergence_params.update(self.calculate_precision_at_k(train, validation))
                 self.record(epoch, **convergence_params)
         return validation_error
 
