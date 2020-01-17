@@ -10,8 +10,7 @@ class LearningRateScheduler:
 
 
 class SgdEarlyStopping:
-    def __init__(self, n_iter=2, min_epoch=2 , anneal_times=4):
-        # min_epoch =  15
+    def __init__(self, n_iter=2, min_epoch=15 , anneal_times=4):
         """
         :param n_iter: if error is increasing for n_iter -> stop
         :param min_epoch: don't stop before min_epcoch
