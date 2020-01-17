@@ -1,14 +1,14 @@
-from config import RANDOM_TEST_PATH, RANDOM_TEST_COL_NAME1, USERS_COL_NAME, USER_COL, ITEM_COL, RANK_COL, \
-    MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
-    MF_SAVE_TRAIN_VALIDATION, BPR, positive_col, negative_col
-import pandas as pd
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
-import pickle
+
+from config import USER_COL, ITEM_COL, RANK_COL, \
+    MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
+    MF_SAVE_TRAIN_VALIDATION, positive_col, negative_col
 
 
 class ValidationCreator:
-    def __init__(self, method='popularity'):
+    def __init__(self, method):
         self.method = method
         self.train_path = MF_WEIGHT_DIR / TRAIN_FILE_NAME
         self.validation_path = MF_WEIGHT_DIR / VALIDATION_FILE_NAME
