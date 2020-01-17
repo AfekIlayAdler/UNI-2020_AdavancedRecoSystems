@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-
-from HW2.config import RANK_COL, ITEM_COL, USER_COL, MF_WEIGHT_DIR, MF_LOAD_TRAIN_VALIDATION, \
-    NEGATIVE_SAMPLES_FILE_NAME, MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, BPR, POSITIVE_COL, negative_col
 from tqdm import tqdm
+
+from HW2.config import RANK_COL, ITEM_COL, USER_COL, MF_WEIGHT_DIR, NEGATIVE_SAMPLES_FILE_NAME, \
+    MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, POSITIVE_COL, NEGATIVE_COL
 
 
 class NegativeSampler:
@@ -47,15 +47,15 @@ class NegativeSampler:
             df[USER_COL] = user
             df[RANK_COL] = 0
             df_list.append(df)
-        if BPR:
-            df = pd.concat(df_list)
-            df.sort_values(by=USER_COL, inplace=True)
-            data = data.rename(columns={ITEM_COL: POSITIVE_COL})
-            data[negative_col] = df[ITEM_COL].values
-            data = data[[USER_COL, POSITIVE_COL, negative_col]]
-        else:
-            df = pd.concat(df_list)
-            data = pd.concat([data, df[col_order]])
+        # if BPR:
+        df = pd.concat(df_list)
+        df.sort_values(by=USER_COL, inplace=True)
+        data = data.rename(columns={ITEM_COL: POSITIVE_COL})
+        data[NEGATIVE_COL] = df[ITEM_COL].values
+        data = data[[USER_COL, POSITIVE_COL, NEGATIVE_COL]]
+        # else:
+        #     df = pd.concat(df_list)
+        #     data = pd.concat([data, df[col_order]])
         return data
 
     def get(self, train, epoch):
