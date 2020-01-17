@@ -1,19 +1,33 @@
 from pathlib import Path
 
+from optimization_objects import Config
+
 SEED = 5
-
-# results
-ONE_CLASS_MF_RESULT_FILE_NAME = 'one_class_mf_run_results.csv'
-BPR_MF_RESULT_FILE_NAME = 'bpr_mf_run_results.csv'
-NEGATIVE_SAMPLES_FILE_NAME = 'negative_samples'
-
 MF_SAVE_TRAIN_VALIDATION = True
 MF_LOAD_TRAIN_VALIDATION = True
 MF_SAVE_NEGATIVE_SAMPLES = True
 MF_LOAD_NEGATIVE_SAMPLES = True
 
 K_LIST_FOR_PRECISION_AT_K = [5, 10, 100, 500]
-RESULT_FILE_NAME = BPR_MF_RESULT_FILE_NAME
+
+CONFIG = Config(
+    lr=0.025,
+    print_metrics=True,
+    beta=0.9,
+    hidden_dimension=18,
+    l2_users=0.01,
+    l2_items=0.01,
+    l2_items_bias=0.001,
+    epochs=35,
+    bias_epochs=5,
+    seed=SEED,
+    negative_sampler_popularity='popularity',
+    validation_creator_sampler_popularity='popularity')
+
+# results
+NEGATIVE_SAMPLES_FILE_NAME = 'negative_samples'
+
+RESULT_FILE_NAME = 'bpr_mf_run_results.csv'
 MF_WEIGHT_DIR = Path('bpr_mf_weights_sgd')
 VALIDATION_FILE_NAME = 'bpr_mf_validation.csv'
 TRAIN_FILE_NAME = 'bpr_class_mf_train.csv'
