@@ -17,16 +17,18 @@ CONFIG = Config(
     l2_items_bias=0.001,
     epochs=35,
     bias_epochs=5,
-    seed=SEED)
+    seed=SEED,
+    negative_sampler_popularity='popularity',
+    validation_creator_sampler_popularity='popularity')
 
 if __name__ == "__main__":
     train = pd.read_csv(TRAIN_PATH)
     create_directories([MF_WEIGHT_DIR, RESULT_DIR])
     train, user_map, item_map = preprocess_for_mf(train)
-    validation_creator = ValidationCreator()
+    config = CONFIG
+    validation_creator = ValidationCreator(config.validation_creator_sampler_popularity)
     train, validation = validation_creator.get(train)
     # calculate the items popularity
-    config = CONFIG
     config.add_attributes(n_users=len(user_map), n_items=len(item_map))
     mf = BPRMatrixFactorizationWithBiasesSGD(config)
     mf.fit(train, user_map, item_map, validation)
