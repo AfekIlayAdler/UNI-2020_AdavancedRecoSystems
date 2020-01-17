@@ -16,14 +16,12 @@ class NegativeSampler:
         self.item_probabilities = item_probabilities
 
     def adjust_probabilities(self, p):
-        p = p / p.sum()  # renormalize
+        p = p / p.sum()  # renormalize for popularity
         if self.method == 'uniform':
             p = pd.Series(1 / p.size, p.index)
         elif self.method == 'inverse_popularity':
             p = (1 / p)
             p = p / p.sum()
-        # elif self.method == 'popularity':
-        #     p = p / p.sum()
         return p
 
     def add_negative_samples(self, data):
