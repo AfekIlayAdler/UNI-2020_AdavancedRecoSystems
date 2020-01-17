@@ -6,3 +6,5 @@
 /.idea/UNI-2020_AdavancedRecoSystems2.iml
 /.ipynb_checkpoints/data_exploration-checkpoint.ipynb
 /HW2/one_class_mf_weights_sgd/*
+/HW2/bpr_mf_weights_sgd/*.csv
+/HW2/results/one_class/bpr_mf_run_results.csv
