@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from config import USER_COL, ITEM_COL, RANK_COL, \
     MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
-    MF_SAVE_TRAIN_VALIDATION, positive_col, negative_col
+    MF_SAVE_TRAIN_VALIDATION, POSITIVE_COL, negative_col
 
 
 class ValidationCreator:
@@ -44,7 +44,7 @@ class ValidationCreator:
                                                                item_probabilities)
             validation.append([user, one_did_rank, one_did_not_rank])
             train = train[(train[USER_COL] != user) | ((train[USER_COL] == user) & (train[ITEM_COL] != one_did_rank))]
-        validation = pd.DataFrame(validation, columns=[USER_COL, positive_col, negative_col])
+        validation = pd.DataFrame(validation, columns=[USER_COL, POSITIVE_COL, negative_col])
         return train, validation
 
     def get(self, train):
@@ -60,7 +60,7 @@ class ValidationCreator:
 
 def create_validation_two_columns(data):
     columns = [USER_COL, ITEM_COL, RANK_COL]
-    df1 = data[[USER_COL, positive_col]]
+    df1 = data[[USER_COL, POSITIVE_COL]]
     df1[RANK_COL] = 1
     df1.columns = columns
     df2 = data[[USER_COL, negative_col]]
