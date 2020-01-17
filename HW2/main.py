@@ -1,12 +1,10 @@
 import pandas as pd
 
-from HW2.config import SEED, MF_WEIGHT_DIR, BPR, RESULT_DIR, RESULT_FILE_NAME
-from HW2.config import TRAIN_PATH,ITEM_COL
+from HW2.config import SEED, MF_WEIGHT_DIR, RESULT_DIR, RESULT_FILE_NAME
+from HW2.config import TRAIN_PATH
 from HW2.optimization_objects import Config
 from HW2.utils import preprocess_for_mf, create_directories
-from MatrixFactorizationModelSGD import OneClassMatrixFactorizationWithBiasesSGD
 from MatrixFactorizationModelSGD_BPR import BPRMatrixFactorizationWithBiasesSGD
-from nagative_sampler import NegativeSampler
 from validation_creator import ValidationCreator
 
 CONFIG = Config(
@@ -22,7 +20,7 @@ CONFIG = Config(
     seed=SEED)
 
 if __name__ == "__main__":
-    train = pd.read_csv(TRAIN_PATH, nrows=100000)
+    train = pd.read_csv(TRAIN_PATH)
     create_directories([MF_WEIGHT_DIR, RESULT_DIR])
     train, user_map, item_map = preprocess_for_mf(train)
     validation_creator = ValidationCreator()
