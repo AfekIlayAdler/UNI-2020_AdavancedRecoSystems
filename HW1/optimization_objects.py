@@ -9,6 +9,27 @@ class LearningRateScheduler:
         return self.lr
 
 
+class AlsEarlyStopping:
+    def __init__(self, n_iter=2, min_epoch=15, anneal_times=4):
+        """
+        :param n_iter: if error is increasing for n_iter -> stop
+        :param min_epoch: don't stop before min_epcoch
+        """
+        self.n_iter = n_iter
+        self.last_value = 0
+        self.consecutive_increasing_errors = 0
+        self.min_epoch = min_epoch
+
+    def stop(self, epoch, error):
+        if epoch >= self.min_epoch:
+            if error > self.last_value:
+                self.consecutive_increasing_errors += 1
+            if self.consecutive_increasing_errors >= self.n_iter:
+                return True
+        self.last_value = error
+        return False
+
+
 class SgdEarlyStopping:
     def __init__(self, n_iter=2, min_epoch=15, anneal_times=4):
         """
@@ -27,7 +48,7 @@ class SgdEarlyStopping:
         if epoch >= self.min_epoch:
             if self.annealing_counter == self.anneal_times:
                 return True
-            if error < self.last_value:
+            if error > self.last_value:
                 self.consecutive_increasing_errors += 1
             if self.consecutive_increasing_errors >= self.n_iter:
                 # anneal
