@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from HW2.config import RANK_COL, ITEM_COL, USER_COL, MF_WEIGHT_DIR, NEGATIVE_SAMPLES_FILE_NAME, \
+from HW2.config import RANK_COL, ITEM_COL, USER_COL, INTERNAL_DATA_DIR, NEGATIVE_SAMPLES_FILE_NAME, \
     MF_LOAD_NEGATIVE_SAMPLES, MF_SAVE_NEGATIVE_SAMPLES, POSITIVE_COL, NEGATIVE_COL
 
 
@@ -24,7 +24,7 @@ class NegativeSampler:
             p = p / p.sum()
         return p
 
-    def add_negative_samples(self, data):
+    def add_negative_samples(self, data): # data is train data
         assert self.method in ['popularity', 'inverse_popularity', 'uniform'], 'negative sampling method not supported'
         print("Creating negative samples")
         data.sort_values(by=USER_COL, inplace=True)
@@ -47,20 +47,16 @@ class NegativeSampler:
             df[USER_COL] = user
             df[RANK_COL] = 0
             df_list.append(df)
-        # if BPR:
         df = pd.concat(df_list)
         df.sort_values(by=USER_COL, inplace=True)
         data = data.rename(columns={ITEM_COL: POSITIVE_COL})
         data[NEGATIVE_COL] = df[ITEM_COL].values
         data = data[[USER_COL, POSITIVE_COL, NEGATIVE_COL]]
-        # else:
-        #     df = pd.concat(df_list)
-        #     data = pd.concat([data, df[col_order]])
         return data
 
     def get(self, train, epoch):
-        file_name = f"{NEGATIVE_SAMPLES_FILE_NAME}_{self.method}_epoch_{epoch}.csv"
-        path = MF_WEIGHT_DIR / file_name
+        file_name = f"{NEGATIVE_SAMPLES_FILE_NAME}_epoch_{epoch}.csv"
+        path = INTERNAL_DATA_DIR / file_name
         if path.exists() and MF_LOAD_NEGATIVE_SAMPLES:
             negative_samples = pd.read_csv(path)
         else:
