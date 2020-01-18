@@ -30,7 +30,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.items_h_gradient = None
         self.user_biases_gradient = None
         self.item_biases_gradient = None
-        self.negative_sampler_popularity = config.negative_sampler_popularity
+        self.negative_sampler_type = config.negative_sampler_type
         np.random.seed(SEED)
 
     # initialization of model's weights
@@ -46,7 +46,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def fit(self, train, user_map: dict, item_map: dict, validation=None):
         """data columns: [user id,movie_id,like or not {0,1}]"""
-        self.negative_sampler = NegativeSampler(get_item_probabilities(train), method=self.negative_sampler_popularity)
+        self.negative_sampler = NegativeSampler(get_item_probabilities(train), method=self.negative_sampler_type)
         self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
         self.weight_init(user_map, item_map, len(train) / len(user_map) * len(item_map))
