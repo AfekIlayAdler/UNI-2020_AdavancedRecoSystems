@@ -3,15 +3,15 @@ import pandas as pd
 from tqdm import tqdm
 
 from config import USER_COL, ITEM_COL, RANK_COL, \
-    MF_WEIGHT_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
+    INTERNAL_DATA_DIR, VALIDATION_FILE_NAME, MF_LOAD_TRAIN_VALIDATION, TRAIN_FILE_NAME, \
     MF_SAVE_TRAIN_VALIDATION, POSITIVE_COL, NEGATIVE_COL
 
 
 class ValidationCreator:
     def __init__(self, method):
         self.method = method
-        self.train_path = MF_WEIGHT_DIR / TRAIN_FILE_NAME
-        self.validation_path = MF_WEIGHT_DIR / VALIDATION_FILE_NAME
+        self.train_path = INTERNAL_DATA_DIR / TRAIN_FILE_NAME
+        self.validation_path = INTERNAL_DATA_DIR / VALIDATION_FILE_NAME
 
     def adjust_probabilities(self, p):
         p = p / p.sum()  # renormalize - so sum of probabilities will sum to 1
@@ -58,12 +58,4 @@ class ValidationCreator:
         return train, validation
 
 
-def create_validation_two_columns(data):
-    columns = [USER_COL, ITEM_COL, RANK_COL]
-    df1 = data[[USER_COL, POSITIVE_COL]]
-    df1[RANK_COL] = 1
-    df1.columns = columns
-    df2 = data[[USER_COL, NEGATIVE_COL]]
-    df2[RANK_COL] = 0
-    df2.columns = columns
-    return pd.concat([df1, df2]).values, data
+
