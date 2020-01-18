@@ -10,8 +10,6 @@ PREDICT_ON = "uniform"  # "random"
 MF_SAVE_TRAIN_VALIDATION = True
 MF_LOAD_TRAIN_VALIDATION = True
 
-MF_SAVE_NEGATIVE_SAMPLES = True
-MF_LOAD_NEGATIVE_SAMPLES = True
 K_LIST_FOR_PRECISION_AT_K = [1, 10, 50]
 
 SEED = 5
@@ -46,6 +44,8 @@ if PREDICT_ON == "popularity":
     TEST_PATH = 'data/RandomTest.csv'
 else:
     TEST_PATH = 'data/PopularityTest.csv'
+
+N_VALIDATION_SETS = 50
 
 RANDOM_TEST_COL_NAME1 = 'Item1'
 RANDOM_TEST_COL_NAME2 = 'Item2'

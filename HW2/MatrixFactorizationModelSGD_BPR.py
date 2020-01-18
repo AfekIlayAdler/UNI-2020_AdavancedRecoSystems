@@ -47,12 +47,13 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
     def fit(self, train, user_map: dict, item_map: dict, validation=None):
         """data columns: [user id,movie_id,like or not {0,1}]"""
         self.negative_sampler = NegativeSampler(get_item_probabilities(train), method=self.negative_sampler_type)
+        self.negative_sampler.create_negative_samples(train)
         self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
         self.weight_init(user_map, item_map, len(train) / len(user_map) * len(item_map))
         validation_error = None
         for epoch in range(1, self.epochs + 1):
-            train_with_negative_samples = self.negative_sampler.get(train, epoch)
+            train_with_negative_samples = self.negative_sampler.get(epoch)
             np.random.shuffle(train_with_negative_samples)
             self.run_epoch(train_with_negative_samples, epoch)
             train_percent_right, train_log_likelihood = self.percent_right_and_log_likelihood(
