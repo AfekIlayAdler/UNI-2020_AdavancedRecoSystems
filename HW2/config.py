@@ -2,14 +2,19 @@ from pathlib import Path
 
 from optimization_objects import Config
 
-SEED = 5
+NEGATIVE_SAMPLER_TYPE = 'popularity'  # 'uniform'
+VALIDATION_CREATOR_SAMPLER_TYPE = 'popularity'  # 'uniform'
+PREDICT_ON = "uniform"  # "random"
+
+# Save and load
 MF_SAVE_TRAIN_VALIDATION = True
 MF_LOAD_TRAIN_VALIDATION = True
+
 MF_SAVE_NEGATIVE_SAMPLES = True
 MF_LOAD_NEGATIVE_SAMPLES = True
+K_LIST_FOR_PRECISION_AT_K = [1, 10, 50]
 
-K_LIST_FOR_PRECISION_AT_K = [5, 10, 100, 500]
-
+SEED = 5
 CONFIG = Config(
     lr=0.025,
     print_metrics=True,
@@ -21,21 +26,27 @@ CONFIG = Config(
     epochs=35,
     bias_epochs=5,
     seed=SEED,
-    negative_sampler_popularity='popularity',
-    validation_creator_sampler_popularity='popularity')
+    negative_sampler_type=NEGATIVE_SAMPLER_TYPE,
+    validation_creator_sampler_type=VALIDATION_CREATOR_SAMPLER_TYPE)
 
 # results
-NEGATIVE_SAMPLES_FILE_NAME = 'negative_samples'
+NEGATIVE_SAMPLES_FILE_NAME = F"negative_samples_{NEGATIVE_SAMPLER_TYPE}"
+RESULT_FILE_NAME = F"validation_results_negative_sampler_{NEGATIVE_SAMPLER_TYPE}_validation_type_{VALIDATION_CREATOR_SAMPLER_TYPE}.csv"
+TRAIN_FILE_NAME = F"train_validation_type_{VALIDATION_CREATOR_SAMPLER_TYPE}.csv"
+VALIDATION_FILE_NAME = F"validation_validation_type_{VALIDATION_CREATOR_SAMPLER_TYPE}.csv"
+PREDICTION_FILE_NAME = F"prediction_negative_sampler_{NEGATIVE_SAMPLER_TYPE}_validation_type_{VALIDATION_CREATOR_SAMPLER_TYPE}.csv"
 
-RESULT_FILE_NAME = 'bpr_mf_run_results.csv'
-MF_WEIGHT_DIR = Path('bpr_mf_weights_sgd')
-VALIDATION_FILE_NAME = 'bpr_mf_validation.csv'
-TRAIN_FILE_NAME = 'bpr_class_mf_train.csv'
-RESULT_DIR = Path(r'results/one_class')
+INTERNAL_DATA_DIR = Path('train_internal_data')
+RESULT_DIR = Path(r'results')
 
-# input configuration as recieved in the assignment
+# input configuration as received in the assignment
 TRAIN_PATH = 'data/Train.csv'
-RANDOM_TEST_PATH = 'data/RandomTest.csv'
+
+if PREDICT_ON == "popularity":
+    TEST_PATH = 'data/RandomTest.csv'
+else:
+    TEST_PATH = 'data/PopularityTest.csv'
+
 RANDOM_TEST_COL_NAME1 = 'Item1'
 RANDOM_TEST_COL_NAME2 = 'Item2'
 USERS_COL_NAME = 'UserID'
@@ -47,8 +58,3 @@ ITEM_COL = 'item'
 RANK_COL = 'rank'
 POSITIVE_COL = 'positive'
 NEGATIVE_COL = 'negative'
-# TEST_PATH = 'data/Test.csv'
-
-# RATING_COL_NAME = 'Ratings_Rating'
-# CHECKPOINT_NAME = f"./checkpoint_{model_name}.pkl"
-# HYPER_PARAM_FILE_NAME = f"HyperParamResult_{model_name}.pkl"
