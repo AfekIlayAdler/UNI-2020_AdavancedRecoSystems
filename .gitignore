@@ -8,3 +8,7 @@
 /HW2/one_class_mf_weights_sgd/*
 /HW2/bpr_mf_weights_sgd/*.csv
 /HW2/results/one_class/bpr_mf_run_results.csv
+/HW2/train_internal_data/negative_samples_popularity.csv
+/HW2/train_internal_data/train_validation_type_popularity.csv
+/HW2/train_internal_data/validation_validation_type_popularity.csv
+/HW2/results/validation_results_negative_sampler_popularity_validation_type_popularity.csv
