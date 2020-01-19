@@ -1,11 +1,10 @@
 from math import exp
-import numpy as np
+from os import makedirs
+from os.path import isdir
 
 import pandas as pd
 
 from HW2.config import USERS_COL_NAME, ITEMS_COL_NAME, USER_COL, ITEM_COL
-from os import mkdir, makedirs
-from os.path import isdir
 
 
 def preprocess_for_mf(train, validation=None):
