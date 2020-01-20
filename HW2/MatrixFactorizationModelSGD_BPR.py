@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.special import expit
 
-from HW2.config import USER_COL, K_LIST_FOR_PRECISION_AT_K, POSITIVE_COL, ITEM_COL, SEED
+from HW2.config import USER_COL, K_LIST_FOR_PRECISION_AT_K, POSITIVE_COL, ITEM_COL, SEED, TEST_PATH, \
+    PREDICTION_FILE_NAME, RESULT_DIR
 from matrix_factorization_abstract import MatrixFactorizationWithBiases
 from momentum_wrapper import MomentumWrapper1D, MomentumWrapper2D
 from nagative_sampler import NegativeSampler
@@ -34,7 +35,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         np.random.seed(SEED)
 
     # initialization of model's weights
-    def weight_init(self, user_map, item_map, global_bias):
+    def weight_init(self, user_map, item_map):
         self.user_map, self.item_map = user_map, item_map
         self.U = np.random.normal(scale=0.2 / self.h_len, size=(self.n_users, self.h_len))
         self.V = np.random.normal(scale=0.2 / self.h_len, size=(self.n_items, self.h_len))
@@ -50,7 +51,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         self.negative_sampler.create_negative_samples(train)
         self.early_stopping = SgdEarlyStopping()
         self.lr = LearningRateScheduler(self.lr)
-        self.weight_init(user_map, item_map, len(train) / len(user_map) * len(item_map))
+        self.weight_init(user_map, item_map)
         validation_error = None
         for epoch in range(1, self.epochs + 1):
             train_with_negative_samples = self.negative_sampler.get(epoch)
@@ -120,3 +121,28 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
             log_likelihood += np.log(prediction)
         percent_right = counter / x.shape[0]
         return percent_right, log_likelihood
+
+    def predict_on_test_set(self):
+        test = pd.read_csv(TEST_PATH)
+        predictions = []
+        for _, row in test.iterrows():
+            user, item1, item2 = self.user_map.get(row['UserID']), self.item_map.get(
+                row['Item1'], -1), self.item_map.get(row['Item2'], -1)
+            # if item2 is more likely then item1 than 1
+            # if the item does not exist we replace it with the mean
+            if item1 + item2 == -2:
+                # choose random
+                prediction = np.random.random_sample()
+            if item1 == -1:
+                print('item exist in test but not in train')
+                prediction = sigmoid(self.item_biases[item2] - np.mean(self.item_biases) + \
+                                     self.U[user, :].dot(self.V[item2, :].T - np.mean(self.V, axis=0)))
+            elif item2 == -1:
+                print('item exist in test but not in train')
+                predictions = sigmoid(np.mean(self.item_biases) - self.item_biases[item1] + \
+                                      self.U[user, :].dot(np.mean(self.V, axis=0) - self.V[item1, :].T))
+            else:
+                prediction = sigmoid(self.sigmoid_inner_scalar_pair(user, item2, item1))
+            predictions.append((prediction > 0.5) * 1)
+        test['bitClassification'] = predictions
+        test.to_csv(RESULT_DIR / PREDICTION_FILE_NAME, index=False)

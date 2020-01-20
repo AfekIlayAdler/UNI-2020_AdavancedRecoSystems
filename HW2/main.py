@@ -17,3 +17,4 @@ if __name__ == "__main__":
     mf = BPRMatrixFactorizationWithBiasesSGD(config)
     mf.fit(train, user_map, item_map, validation)
     mf.get_results().to_csv(RESULT_DIR / RESULT_FILE_NAME, index=False)
+    mf.predict_on_test_set()
