@@ -23,13 +23,13 @@ class SgdEarlyStopping:
         self.annealing_counter = 0
         self.anneal_times = anneal_times
 
-    def stop(self, mf, epoch, error):
+    def stop(self, mf, epoch, value):
         if epoch >= self.min_epoch:
             if self.annealing_counter == self.anneal_times:
                 return True
-            if error < self.last_value:
+            if value < self.last_value:
                 self.consecutive_increasing_errors += 1
-            if error >= self.last_value:
+            if value >= self.last_value:
                 self.consecutive_increasing_errors = 0
             if self.consecutive_increasing_errors >= self.n_iter:
                 # anneal
@@ -37,7 +37,7 @@ class SgdEarlyStopping:
                 self.annealing_counter += 1
                 self.consecutive_increasing_errors = 0
                 print('#' * 50 + 'learning rate annealed')
-        self.last_value = error
+        self.last_value = value
         return False
 
 

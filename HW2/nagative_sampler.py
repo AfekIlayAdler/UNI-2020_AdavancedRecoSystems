@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from HW2.config import ITEM_COL, USER_COL, INTERNAL_DATA_DIR, NEGATIVE_SAMPLES_FILE_NAME, N_VALIDATION_SETS
+from HW2.config import ITEM_COL, USER_COL, INTERNAL_DATA_DIR, NEGATIVE_SAMPLES_FILE_NAME, N_NEGATIVE_SAMPLES_SETS
 
 
 class NegativeSampler:
@@ -38,7 +38,7 @@ class NegativeSampler:
             user_negative_samples = pd.DataFrame()
             user_n_items = len(user_unique_items)
             replace_or_not = len(user_items_did_not_rank) < user_n_items
-            for i in range(1, N_VALIDATION_SETS):
+            for i in range(1, N_NEGATIVE_SAMPLES_SETS):
                 user_negative_samples[i] = np.random.choice(p.index,
                                                             size=user_n_items,
                                                             replace=replace_or_not, p=p.values)
@@ -48,7 +48,7 @@ class NegativeSampler:
         if self.path.exists():
             self.positive_samples = data
         else:
-            empty_df = pd.DataFrame(columns=[i for i in range(1, N_VALIDATION_SETS)])  # create file
+            empty_df = pd.DataFrame(columns=[i for i in range(1, N_NEGATIVE_SAMPLES_SETS)])  # create file
             empty_df.to_csv(self.path, index=False)
             self._create_and_save_negative_samples(data)
 
