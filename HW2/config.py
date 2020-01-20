@@ -45,7 +45,7 @@ if PREDICT_ON == "popularity":
 else:
     TEST_PATH = 'data/PopularityTest.csv'
 
-N_VALIDATION_SETS = 50
+N_NEGATIVE_SAMPLES_SETS = 50
 
 RANDOM_TEST_COL_NAME1 = 'Item1'
 RANDOM_TEST_COL_NAME2 = 'Item2'
