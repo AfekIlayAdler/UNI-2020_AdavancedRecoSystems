@@ -95,17 +95,22 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def calculate_precision_at_k(self, train, val):
         unique_items = set([i for i in range(self.n_items)])
-        ranks = np.zeros(self.n_users)
+        ranks_all_items = np.zeros(self.n_users)
+        ranks_items_user_did_not_rank = np.zeros(self.n_users)
         for user in range(self.n_users):
             user_validation_item = val[val[USER_COL] == user][POSITIVE_COL].values[0]
             user_unique_items = set(train[train[USER_COL] == user][ITEM_COL])
             user_items_did_not_rank = list(unique_items.difference(user_unique_items))
-            user_items_did_not_rank_likelihood = pd.Series(expit(self.V.dot(self.U[user, :]) + self.item_biases)).take(
-                user_items_did_not_rank)
-            ranks[user] = user_items_did_not_rank_likelihood.rank(ascending=False)[user_validation_item]
+            relative_ranks = pd.Series(expit(self.V.dot(self.U[user, :]) + self.item_biases))
+            ranks_items_user_did_not_rank[user] = relative_ranks.take(user_items_did_not_rank).rank(ascending=False)[
+                user_validation_item]
+            ranks_all_items[user] = relative_ranks.rank(ascending=False)[user_validation_item]
         results_dict = {}
         for k in K_LIST_FOR_PRECISION_AT_K:
-            results_dict[F"precision_at_{k}"] = np.sum(ranks <= k) / self.n_users
+            results_dict[F"precision_at_{k}_all_items"] = np.sum(ranks_all_items <= k) / self.n_users
+            results_dict[F"precision_at_{k}_items_user_did_not_rank"] = np.sum(
+                ranks_items_user_did_not_rank <= k) / self.n_users
+        results_dict[F"mpr_all_items"] = np.mean(ranks_all_items / self.n_items)
         return results_dict
 
     def predict_likelihood(self, user, item):
@@ -139,7 +144,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
                                      self.U[user, :].dot(self.V[item2, :].T - np.mean(self.V, axis=0)))
             elif item2 == -1:
                 print('item exist in test but not in train')
-                predictions = sigmoid(np.mean(self.item_biases) - self.item_biases[item1] + \
+                prediction = sigmoid(np.mean(self.item_biases) - self.item_biases[item1] + \
                                       self.U[user, :].dot(np.mean(self.V, axis=0) - self.V[item1, :].T))
             else:
                 prediction = sigmoid(self.sigmoid_inner_scalar_pair(user, item2, item1))
