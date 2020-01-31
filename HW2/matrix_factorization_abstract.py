@@ -52,6 +52,5 @@ class MatrixFactorizationWithBiases:
         return loss
 
     def sigmoid_inner_scalar(self, user, item):
-        return self.global_bias + self.user_biases[user] + self.item_biases[item] \
-               + self.U[user, :].dot(self.V[item, :].T)
+        return self.item_biases[item] + self.U[user, :].dot(self.V[item, :].T)
 
