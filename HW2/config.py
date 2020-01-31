@@ -2,9 +2,10 @@ from pathlib import Path
 
 from optimization_objects import Config
 
-NEGATIVE_SAMPLER_TYPE = 'popularity'  # 'uniform'
-VALIDATION_CREATOR_SAMPLER_TYPE = 'popularity'  # 'uniform'
-PREDICT_ON = "uniform"  # "random"
+NEGATIVE_SAMPLER_TYPE = 'popularity'  # 'uniform' ,'popularity'
+VALIDATION_CREATOR_SAMPLER_TYPE = 'popularity'  # 'uniform' ,'popularity'
+PREDICT_ON = 'popularity'  # "random"
+assert VALIDATION_CREATOR_SAMPLER_TYPE == PREDICT_ON, 'predict on wrong test'
 
 # Save and load
 MF_SAVE_TRAIN_VALIDATION = True
