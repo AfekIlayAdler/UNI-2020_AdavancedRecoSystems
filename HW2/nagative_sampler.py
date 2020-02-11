@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from HW2.config import ITEM_COL, USER_COL, INTERNAL_DATA_DIR, NEGATIVE_SAMPLES_FILE_NAME, N_NEGATIVE_SAMPLES_SETS
+from HW2.config import ITEM_COL, USER_COL, INTERNAL_DATA_DIR, NEGATIVE_SAMPLES_FILE_NAME, N_NEGATIVE_SAMPLES_SETS, LOAD_NEGATIVE
 
 
 class NegativeSampler:
@@ -45,7 +45,7 @@ class NegativeSampler:
             user_negative_samples.to_csv(self.path, mode='a', header=False, index=False)
 
     def create_negative_samples(self, data):
-        if self.path.exists():
+        if self.path.exists() and LOAD_NEGATIVE:
             self.positive_samples = data
         else:
             empty_df = pd.DataFrame(columns=[i for i in range(1, N_NEGATIVE_SAMPLES_SETS)])  # create file

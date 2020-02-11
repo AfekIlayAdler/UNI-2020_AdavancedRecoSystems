@@ -74,6 +74,7 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
 
     def run_epoch(self, data, epoch):
         lr = self.lr.update(epoch)
+        data = data.astype(int)
         for row in data:
             user, item_positive, item_negative = row
             error = 1 - sigmoid(self.sigmoid_inner_scalar_pair(user, item_positive, item_negative))
@@ -117,11 +118,12 @@ class BPRMatrixFactorizationWithBiasesSGD(MatrixFactorizationWithBiases):
         return sigmoid(self.sigmoid_inner_scalar(user, item))
 
     def percent_right_and_log_likelihood(self, x):
+        x = x.astype(int)
         log_likelihood = 0
         counter = 0
         for row in x:
             user, item_positive, item_negative = row
-            prediction = sigmoid(self.sigmoid_inner_scalar_pair(user, item_positive, item_negative))
+            prediction = sigmoid(self.sigmoid_inner_scalar_pair(int(user), int(item_positive), int(item_negative)))
             counter += (prediction > 0.5)
             log_likelihood += np.log(prediction)
         percent_right = counter / x.shape[0]
